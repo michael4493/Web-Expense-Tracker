@@ -1,86 +1,11 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-HK">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>專業雲端記帳本</title>
+    <title>肥蟲記帳本</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        /* --- CSS 美化排版區 --- */
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f7f6;
-            color: #333;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        h1 { text-align: center; color: #2c3e50; }
-        
-        /* 卡片式設計 */
-        .card {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-        
-        /* 總結區塊排版 */
-        .summary-container {
-            display: flex;
-            justify-content: space-between;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .summary-box {
-            flex: 1;
-            padding: 15px;
-            margin: 0 5px;
-            border-radius: 8px;
-            font-weight: bold;
-        }
-        .bg-income { background-color: #d4edda; color: #155724; }
-        .bg-expense { background-color: #f8d7da; color: #721c24; }
-        .bg-save { background-color: #cce5ff; color: #004085; }
-
-        /* 表單排版 */
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input, select, button {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            box-sizing: border-box;
-            font-size: 16px;
-        }
-        button {
-            background-color: #28a745;
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-weight: bold;
-            margin-top: 10px;
-        }
-        button:hover { background-color: #218838; }
-
-        /* 圖表與清單排版 */
-        .chart-container { position: relative; height: 300px; width: 100%; }
-        ul { list-style-type: none; padding: 0; }
-        li {
-            background: #fdfdfd;
-            border-left: 5px solid #007bff;
-            margin-bottom: 10px;
-            padding: 10px;
-            border-radius: 4px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            display: flex;
-            justify-content: space-between;
-        }
-        .li-expense { border-left-color: #dc3545; }
-        .li-income { border-left-color: #28a745; }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
