@@ -3,67 +3,323 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>肥蟲記帳本</title>
+    <title>專業雲端記帳本</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* 這裡放 CSS，我們先寫一點點讓畫面不要太醜 */
-        body { font-family: sans-serif; padding: 20px; max-width: 500px; margin: auto; }
-        input, button { margin: 5px 0; padding: 8px; width: 100%; box-sizing: border-box; }
-        li { margin-bottom: 10px; }
+        /* --- CSS 美化排版區 --- */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 { text-align: center; color: #2c3e50; }
+        
+        /* 卡片式設計 */
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        /* 總結區塊排版 */
+        .summary-container {
+            display: flex;
+            justify-content: space-between;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .summary-box {
+            flex: 1;
+            padding: 15px;
+            margin: 0 5px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+        .bg-income { background-color: #d4edda; color: #155724; }
+        .bg-expense { background-color: #f8d7da; color: #721c24; }
+        .bg-save { background-color: #cce5ff; color: #004085; }
+
+        /* 表單排版 */
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        button:hover { background-color: #218838; }
+
+        /* 圖表與清單排版 */
+        .chart-container { position: relative; height: 300px; width: 100%; }
+        ul { list-style-type: none; padding: 0; }
+        li {
+            background: #fdfdfd;
+            border-left: 5px solid #007bff;
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+        }
+        .li-expense { border-left-color: #dc3545; }
+        .li-income { border-left-color: #28a745; }
     </style>
 </head>
 <body>
 
-    <h1>💰 肥蟲記帳本🐛 💰</h1>
+    <h1>📊 Lokhei money money money</h1>
 
-    <div>
-        <input type="date" id="dateInput">
-        <input type="text" id="categoryInput" placeholder="請輸入類別 (例如：午餐、交通)">
-        <input type="number" id="amountInput" placeholder="請輸入金額">
-        <button onclick="addExpense()">新增支出</button>
+    <div class="summary-container">
+        <div class="summary-box bg-income">
+            總收入<br>$<span id="totalIncome">0</span>
+        </div>
+        <div class="summary-box bg-expense">
+            總支出<br>$<span id="totalExpense">0</span>
+        </div>
+        <div class="summary-box bg-save">
+            目前結餘 (儲錢)<br>$<span id="totalBalance">0</span>
+        </div>
     </div>
 
-    <hr>
+    <div class="card">
+        <h3>➕ 新增交易</h3>
+        <div class="form-group">
+            <label>日期</label>
+            <input type="date" id="inputDate">
+        </div>
+        
+        <div class="form-group">
+            <label>交易類型</label>
+            <select id="inputType">
+                <option value="expense">支出 (Expense)</option>
+                <option value="income">收入 (Income)</option>
+                <option value="transfer">找卡數 / 轉帳 (Transfer)</option>
+                <option value="lend">借人錢 (Lend)</option>
+                <option value="repay">人哋還錢 (Repay)</option>
+            </select>
+        </div>
 
-    <h2>總支出: $<span id="totalAmount">0</span></h2>
-    <ul id="expenseList">
-        </ul>
+        <div class="form-group">
+            <label>途徑 / 分類</label>
+            <select id="inputCategory">
+                <option value="Breakfast">Breakfast</option>
+                <option value="Lunch">Lunch</option>
+                <option value="Dinner">Dinner</option>
+                <option value="Taobao">Online Shopping</option>
+                <option value="Shopping">Shopping (makeup, bag, clothes...)</option>
+                <option value="Playing">Entertainment</option>
+                <option value="Travel">Travel</option>
+                <option value="In Octopus">In Octopus</option>
+                <option value="Nail">Nail</option>
+                <option value="Credit Card Bill">找卡數 (Credit Card Bill)</option>
+                <option value="Debt">借貸相關 (Debt)</option>
+                <option value="Income">收入</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>帳戶 / 來源</label>
+            <select id="inputAccount">
+                <optgroup label="帳戶 (Accounts)">
+                    <option value="Cash">Cash</option>
+                    <option value="Credit Card DBS">Credit Card DBS</option>
+                    <option value="Alipay">Alipay</option>
+                    <option value="Mox">Mox</option>
+                    <option value="ZA Bank">ZA Bank</option>
+                    <option value="Payme">Payme</option>
+                    <option value="Tap&Go">Tap&Go</option>
+                </optgroup>
+                <optgroup label="收入來源 (Income Sources)">
+                    <option value="Mum">Mum</option>
+                    <option value="Michael">Michael</option>
+                    <option value="Grandma">Grandma</option>
+                    <option value="Salary">Salary</option>
+                    <option value="Other">Other</option>
+                </optgroup>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>金額</label>
+            <input type="number" id="inputAmount" placeholder="輸入金額 (HKD)">
+        </div>
+
+        <button onclick="addTransaction()">確認新增</button>
+    </div>
+
+    <div class="card">
+        <h3>📈 邊項支出最多 (支出分析)</h3>
+        <div class="chart-container">
+            <canvas id="expenseChart"></canvas>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>📝 最近交易紀錄</h3>
+        <ul id="transactionList">
+            </ul>
+        
+        <button onclick="clearAllData()" style="background-color: #dc3545; margin-top: 15px;">🗑️ 清除所有紀錄</button>
+    </div>
 
     <script>
-        // 準備一個變數來記錄總金額
-        let total = 0;
+        // 1. 啟動 LocalStorage (讓重整網頁資料不會不見)
+        let transactions = JSON.parse(localStorage.getItem('myExpenses')) || [];
+        let myChart = null; // 準備放圖表的變數
 
-        // 當按下「新增支出」按鈕時，會執行這個 function
-        function addExpense() {
-            // 1. 抓取使用者輸入的值 (就像 Python 裡的變數)
-            let date = document.getElementById("dateInput").value;
-            let category = document.getElementById("categoryInput").value;
-            let amount = document.getElementById("amountInput").value;
+        // 2. 設定今日預設日期
+        document.getElementById('inputDate').valueAsDate = new Date();
 
-            // 簡單的檢查：如果沒有填寫完整，就跳出警告
-            if (date === "" || category === "" || amount === "") {
-                alert("請填寫完整的日期、類別與金額！");
-                return; // 提早結束，不往下執行
+        // 3. 新增交易的主要 Function
+        function addTransaction() {
+            const date = document.getElementById('inputDate').value;
+            const type = document.getElementById('inputType').value;
+            const account = document.getElementById('inputAccount').value;
+            const category = document.getElementById('inputCategory').value;
+            const amount = parseFloat(document.getElementById('inputAmount').value);
+
+            if (!date || isNaN(amount) || amount <= 0) {
+                alert("請填寫正確的日期與金額！");
+                return;
             }
 
-            // 將金額轉換為數字 (這就像 Python 裡的 int() !)
-            let amountNumber = parseInt(amount);
+            // 建立一筆新資料 (Dictionary/Object)
+            const transaction = {
+                id: Date.now(),
+                date: date,
+                type: type,
+                account: account,
+                category: category,
+                amount: amount
+            };
 
-            // 2. 更新總金額
-            total += amountNumber;
-            document.getElementById("totalAmount").innerText = total;
+            // 存入陣列並更新 LocalStorage
+            transactions.push(transaction);
+            localStorage.setItem('myExpenses', JSON.stringify(transactions));
 
-            // 3. 把紀錄顯示到畫面的清單上
-            let list = document.getElementById("expenseList");
-            let newItem = document.createElement("li");
-            newItem.innerText = `日期: ${date} | 類別: ${category} | 金額: $${amountNumber}`;
-            
-            list.appendChild(newItem); // 把新項目加進清單裡
+            // 清空金額輸入框
+            document.getElementById('inputAmount').value = '';
 
-            // 4. 清空輸入框，方便輸入下一筆
-            document.getElementById("categoryInput").value = "";
-            document.getElementById("amountInput").value = "";
+            // 更新畫面
+            updateDashboard();
         }
-    </script>
 
+        // 4. 更新畫面的 Function (計算總和、畫圖表、列出清單)
+        function updateDashboard() {
+            let totalIncome = 0;
+            let totalExpense = 0;
+            const listEl = document.getElementById('transactionList');
+            listEl.innerHTML = ''; // 先清空舊畫面
+
+            // 用來準備畫圖表的資料分類箱
+            const expenseData = {};
+
+            // 跑迴圈處理每一筆資料
+            transactions.forEach(t => {
+                // 計算總和邏輯
+                if (t.type === 'income' || t.type === 'repay') {
+                    totalIncome += t.amount;
+                } else if (t.type === 'expense' || t.type === 'lend') {
+                    totalExpense += t.amount;
+                    
+                    // 收集畫圖表的資料 (找出邊項支出最多)
+                    if (t.type === 'expense') {
+                        if (expenseData[t.category]) {
+                            expenseData[t.category] += t.amount;
+                        } else {
+                            expenseData[t.category] = t.amount;
+                        }
+                    }
+                }
+                // (找卡數/轉帳 不列入總收支，只當作紀錄)
+
+                // 產生清單 HTML
+                const li = document.createElement('li');
+                li.className = (t.type === 'income' || t.type === 'repay') ? 'li-income' : 'li-expense';
+                li.innerHTML = `
+                    <span><strong>${t.date}</strong> | ${t.account} -> ${t.category} (${t.type})</span>
+                    <span>$${t.amount}</span>
+                `;
+                // 把最新的紀錄放在最上面
+                listEl.prepend(li); 
+            });
+
+            // 更新數字顯示
+            document.getElementById('totalIncome').innerText = totalIncome;
+            document.getElementById('totalExpense').innerText = totalExpense;
+            document.getElementById('totalBalance').innerText = totalIncome - totalExpense;
+
+            // 繪製圖表
+            drawChart(expenseData);
+        }
+
+        // 5. 繪製圓環圖 (Chart.js 魔法)
+        function drawChart(dataObj) {
+            const ctx = document.getElementById('expenseChart').getContext('2d');
+            
+            // 如果圖表已經存在，先摧毀它再重畫
+            if (myChart) { myChart.destroy(); }
+
+            // 拆解字典變成 Chart.js 看得懂的格式
+            const labels = Object.keys(dataObj);
+            const dataValues = Object.values(dataObj);
+
+            myChart = new Chart(ctx, {
+                type: 'doughnut', // 圓環圖
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: dataValues,
+                        backgroundColor: [
+                            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+                            '#FF9F40', '#E7E9ED', '#8AC926', '#1982C4'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right' }
+                    }
+                }
+            });
+        }
+
+        // 6. 清除所有紀錄的 Function
+        function clearAllData() {
+            // 加上 confirm 跳出確認視窗，避免使用者不小心誤觸
+            if (confirm("確定要清除所有的記帳紀錄嗎？這個動作無法復原喔！")) {
+                // 1. 把瀏覽器 LocalStorage 裡的資料徹底刪除
+                localStorage.removeItem('myExpenses');
+                
+                // 2. 把程式目前記憶體裡的陣列也清空
+                transactions = [];
+                
+                // 3. 呼叫更新畫面的 Function，讓圖表和數字瞬間歸零
+                updateDashboard();
+            }
+        }
+
+        // 網頁一打開時，立刻執行一次更新畫面
+        updateDashboard();
+    </script>
 </body>
 </html>
