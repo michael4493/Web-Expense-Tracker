@@ -71,3 +71,19 @@ li {
 }
 .li-expense { border-left-color: #dc3545; }
 .li-income { border-left-color: #28a745; }
+
+/* 專屬單筆刪除按鈕的樣式 */
+.delete-btn {
+    background: none;
+    color: #dc3545;
+    border: none;
+    width: auto;
+    padding: 2px 8px;
+    margin-left: 10px;
+    margin-top: 0;
+    font-size: 14px;
+}
+.delete-btn:hover {
+    background-color: #ffe6e6;
+    border-radius: 4px;
+}

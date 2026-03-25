@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>肥蟲記帳本</title>
+    <title>💰肥蟲記帳本💰</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <h1>📊 Lokhei money money money</h1>
+    <h1>💰 肥蟲記賬本🐛 💰</h1>
 
     <div class="summary-container">
         <div class="summary-box bg-income">
@@ -49,13 +49,14 @@
                 <option value="Dinner">Dinner</option>
                 <option value="Taobao">Online Shopping</option>
                 <option value="Shopping">Shopping (makeup, bag, clothes...)</option>
-                <option value="Playing">Entertainment</option>
+                <option value="Playing">Entertainment (高級playing)</option>
                 <option value="Travel">Travel</option>
                 <option value="In Octopus">In Octopus</option>
                 <option value="Nail">Nail</option>
                 <option value="Credit Card Bill">找卡數 (Credit Card Bill)</option>
                 <option value="Debt">借貸相關 (Debt)</option>
                 <option value="Income">收入</option>
+                <option value="Other">其他</option>
             </select>
         </div>
 
@@ -70,6 +71,8 @@
                     <option value="ZA Bank">ZA Bank</option>
                     <option value="Payme">Payme</option>
                     <option value="Tap&Go">Tap&Go</option>
+                    <option value="BOC">BOC</option>
+                    <option value="Octopus">Octopus</option>
                 </optgroup>
                 <optgroup label="收入來源 (Income Sources)">
                     <option value="Mum">Mum</option>
@@ -94,6 +97,21 @@
         <div class="chart-container">
             <canvas id="expenseChart"></canvas>
         </div>
+        
+        <div id="analysisReport" style="margin-top: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; border-left: 5px solid #ffc107;">
+            目前尚無支出資料可供分析。
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>💰 收入來源分析</h3>
+        <div class="chart-container">
+            <canvas id="incomeChart"></canvas>
+        </div>
+        
+        <div id="incomeReport" style="margin-top: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; border-left: 5px solid #28a745;">
+            目前尚無收入資料可供分析。
+        </div>
     </div>
 
     <div class="card">
@@ -104,147 +122,6 @@
         <button onclick="clearAllData()" style="background-color: #dc3545; margin-top: 15px;">🗑️ 清除所有紀錄</button>
     </div>
 
-    <script>
-        // 1. 啟動 LocalStorage (讓重整網頁資料不會不見)
-        let transactions = JSON.parse(localStorage.getItem('myExpenses')) || [];
-        let myChart = null; // 準備放圖表的變數
-
-        // 2. 設定今日預設日期
-        document.getElementById('inputDate').valueAsDate = new Date();
-
-        // 3. 新增交易的主要 Function
-        function addTransaction() {
-            const date = document.getElementById('inputDate').value;
-            const type = document.getElementById('inputType').value;
-            const account = document.getElementById('inputAccount').value;
-            const category = document.getElementById('inputCategory').value;
-            const amount = parseFloat(document.getElementById('inputAmount').value);
-
-            if (!date || isNaN(amount) || amount <= 0) {
-                alert("請填寫正確的日期與金額！");
-                return;
-            }
-
-            // 建立一筆新資料 (Dictionary/Object)
-            const transaction = {
-                id: Date.now(),
-                date: date,
-                type: type,
-                account: account,
-                category: category,
-                amount: amount
-            };
-
-            // 存入陣列並更新 LocalStorage
-            transactions.push(transaction);
-            localStorage.setItem('myExpenses', JSON.stringify(transactions));
-
-            // 清空金額輸入框
-            document.getElementById('inputAmount').value = '';
-
-            // 更新畫面
-            updateDashboard();
-        }
-
-        // 4. 更新畫面的 Function (計算總和、畫圖表、列出清單)
-        function updateDashboard() {
-            let totalIncome = 0;
-            let totalExpense = 0;
-            const listEl = document.getElementById('transactionList');
-            listEl.innerHTML = ''; // 先清空舊畫面
-
-            // 用來準備畫圖表的資料分類箱
-            const expenseData = {};
-
-            // 跑迴圈處理每一筆資料
-            transactions.forEach(t => {
-                // 計算總和邏輯
-                if (t.type === 'income' || t.type === 'repay') {
-                    totalIncome += t.amount;
-                } else if (t.type === 'expense' || t.type === 'lend') {
-                    totalExpense += t.amount;
-                    
-                    // 收集畫圖表的資料 (找出邊項支出最多)
-                    if (t.type === 'expense') {
-                        if (expenseData[t.category]) {
-                            expenseData[t.category] += t.amount;
-                        } else {
-                            expenseData[t.category] = t.amount;
-                        }
-                    }
-                }
-                // (找卡數/轉帳 不列入總收支，只當作紀錄)
-
-                // 產生清單 HTML
-                const li = document.createElement('li');
-                li.className = (t.type === 'income' || t.type === 'repay') ? 'li-income' : 'li-expense';
-                li.innerHTML = `
-                    <span><strong>${t.date}</strong> | ${t.account} -> ${t.category} (${t.type})</span>
-                    <span>$${t.amount}</span>
-                `;
-                // 把最新的紀錄放在最上面
-                listEl.prepend(li); 
-            });
-
-            // 更新數字顯示
-            document.getElementById('totalIncome').innerText = totalIncome;
-            document.getElementById('totalExpense').innerText = totalExpense;
-            document.getElementById('totalBalance').innerText = totalIncome - totalExpense;
-
-            // 繪製圖表
-            drawChart(expenseData);
-        }
-
-        // 5. 繪製圓環圖 (Chart.js 魔法)
-        function drawChart(dataObj) {
-            const ctx = document.getElementById('expenseChart').getContext('2d');
-            
-            // 如果圖表已經存在，先摧毀它再重畫
-            if (myChart) { myChart.destroy(); }
-
-            // 拆解字典變成 Chart.js 看得懂的格式
-            const labels = Object.keys(dataObj);
-            const dataValues = Object.values(dataObj);
-
-            myChart = new Chart(ctx, {
-                type: 'doughnut', // 圓環圖
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: dataValues,
-                        backgroundColor: [
-                            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
-                            '#FF9F40', '#E7E9ED', '#8AC926', '#1982C4'
-                        ]
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'right' }
-                    }
-                }
-            });
-        }
-
-        // 6. 清除所有紀錄的 Function
-        function clearAllData() {
-            // 加上 confirm 跳出確認視窗，避免使用者不小心誤觸
-            if (confirm("確定要清除所有的記帳紀錄嗎？這個動作無法復原喔！")) {
-                // 1. 把瀏覽器 LocalStorage 裡的資料徹底刪除
-                localStorage.removeItem('myExpenses');
-                
-                // 2. 把程式目前記憶體裡的陣列也清空
-                transactions = [];
-                
-                // 3. 呼叫更新畫面的 Function，讓圖表和數字瞬間歸零
-                updateDashboard();
-            }
-        }
-
-        // 網頁一打開時，立刻執行一次更新畫面
-        updateDashboard();
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
