@@ -85,7 +85,7 @@ function setTransactionType(type) {
         // 顯示支出選項，隱藏收入選項
         if(optExp) optExp.style.display = 'block';
         if(optInc) optInc.style.display = 'none';
-        document.getElementById('inputCategory').value = 'Breakfast'; // 自動切回預設支出
+        document.getElementById('inputCategory').value = 'Meal'; // 自動切回預設支出
     } else {
         btnInc.classList.add('active');
         btnExp.classList.remove('active');
