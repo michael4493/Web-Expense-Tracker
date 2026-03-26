@@ -9,59 +9,79 @@
 </head>
 <body>
 
-    <h1>💰 肥蟲記賬本🐛 💰</h1>
+    <div style="text-align: right; margin-bottom: 10px;">
+        <button onclick="toggleLanguage()" class="lang-btn">🌐 EN / 中文</button>
+    </div>
+
+    <h1 data-i18n="appTitle">💰 肥蟲記賬本🐛 💰</h1>
+
+    <div style="text-align: right; margin-bottom: 10px; background: white; padding: 10px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+        <label for="filterTime" style="display: inline-block; margin-right: 5px;" data-i18n="viewRange">📅 查看範圍：</label>
+        <select id="filterTime" onchange="handleFilterChange()" style="width: auto; display: inline-block;">
+            <option value="all" data-i18n="rangeAll">全部紀錄 (All Time)</option>
+            <option value="month" data-i18n="rangeMonth">這個月 (This Month)</option>
+            <option value="week" data-i18n="rangeWeek">最近 7 天 (Last 7 Days)</option>
+            <option value="custom" data-i18n="rangeCustom">自訂範圍 (Custom)</option>
+        </select>
+        
+        <div id="customDateArea" style="display: none; margin-top: 10px;">
+            <input type="date" id="customStartDate" onchange="updateDashboard()" style="width: auto; display: inline-block;"> 
+            <span data-i18n="to">至</span> 
+            <input type="date" id="customEndDate" onchange="updateDashboard()" style="width: auto; display: inline-block;">
+        </div>
+    </div>
 
     <div class="summary-container">
         <div class="summary-box bg-income">
-            總收入<br>$<span id="totalIncome">0</span>
+            <span data-i18n="totalIncome">總收入</span><br>$<span id="totalIncome">0</span>
         </div>
         <div class="summary-box bg-expense">
-            總支出<br>$<span id="totalExpense">0</span>
+            <span data-i18n="totalExpense">總支出</span><br>$<span id="totalExpense">0</span>
         </div>
         <div class="summary-box bg-save">
-            目前結餘 (儲錢)<br>$<span id="totalBalance">0</span>
+            <span data-i18n="currentBalance">目前結餘</span><br>$<span id="totalBalance">0</span>
         </div>
     </div>
 
     <div class="card">
-        <h3>➕ 新增交易</h3>
+        <h3 data-i18n="addTransaction">➕ 新增交易</h3>
         <div class="form-group">
-            <label>日期</label>
+            <label data-i18n="date">日期</label>
             <input type="date" id="inputDate">
         </div>
         
         <div class="form-group">
-            <label>交易類型</label>
-            <select id="inputType">
-                <option value="expense">支出💸 (Expense)</option>
-                <option value="income">收入💰 (Income)</option>
-                <option value="transfer">找卡數 / 轉帳💳 (Transfer)</option>
-                <option value="lend">借人錢😁 (Lend)</option>
-                <option value="repay">人哋還錢🤭 (Repay)</option>
-            </select>
+            <label data-i18n="transactionType">交易類型</label>
+            <div class="type-btn-group">
+                <button type="button" id="btnExpense" class="type-btn active" onclick="setTransactionType('expense')" data-i18n="expenseBtn">支出💸</button>
+                <button type="button" id="btnIncome" class="type-btn" onclick="setTransactionType('income')" data-i18n="incomeBtn">收入💰</button>
+            </div>
+            <input type="hidden" id="inputType" value="expense">
         </div>
 
         <div class="form-group">
-            <label>途徑 / 分類</label>
+            <label data-i18n="category">用途 / 分類</label>
             <select id="inputCategory">
-                <option value="Breakfast">Breakfast🥐</option>
-                <option value="Lunch">Lunch🍜</option>
-                <option value="Dinner">Dinner🍛</option>
-                <option value="Online Shopping">Online Shopping🛍️</option>
-                <option value="Shopping">Shopping👜 (makeup, bag, clothes...)</option>
-                <option value="Playing">Entertainment🎮 (高級playing)</option>
-                <option value="Travel">Travel🚋</option>
-                <option value="In Octopus">In Octopus🐙</option>
-                <option value="Nail">Nail💅</option>
-                <option value="Credit Card Bill">找卡數💳 (Credit Card Bill)</option>
-                <option value="Debt">借貸相關🧾 (Debt)</option>
-                <option value="Income">收入🪙</option>
-                <option value="Other">其他📝</option>
+                <optgroup label="支出用途" id="optExpense">  
+                    <option value="Breakfast">Meal🥔🍳🧋</option>
+                    <option value="Online Shopping">Online Shopping🛍️</option>
+                    <option value="Shopping">Shopping👜 (makeup, bag, clothes...)</option>
+                    <option value="Playing">Entertainment🎮 (娛樂)</option>
+                    <option value="Travel">Travel🚋</option>
+                    <option value="Taxi">Uber/Taxi🚕</option>
+                    <option value="In Octopus">In Octopus🐙</option>
+                    <option value="Nail">Nail💅</option>
+                    <option value="Credit Card Bill">找卡數💳 (Credit Card Bill)</option>
+                </optgroup>
+                <optgroup label="收入來源" id="optIncome">
+                    <option value="Income">收入🪙</option>
+                    <option value="Other">其他📝</option>    
+                </optgroup>                
             </select>
         </div>
 
         <div class="form-group">
-            <label>帳戶 / 來源</label>
+            <label data-i18n="accountSource">帳戶 / 來源</label>
             <select id="inputAccount">
                 <optgroup label="帳戶 (Accounts)">
                     <option value="Cash">Cash💵</option>
@@ -74,7 +94,7 @@
                     <option value="BOC">BOC💼</option>
                     <option value="Octopus">Octopus🐙</option>
                 </optgroup>
-                <optgroup label="收入來源 (Income Sources)">
+                <optgroup label="來源 (Sources)">
                     <option value="Mum">Mum👺</option>
                     <option value="Michael">Michael👦</option>
                     <option value="Grandma">Grandma👵</option>
@@ -85,41 +105,45 @@
         </div>
 
         <div class="form-group">
-            <label>金額</label>
-            <input type="number" id="inputAmount" placeholder="輸入金額 (HKD)">
+            <label data-i18n="amount">金額</label>
+            <input type="number" id="inputAmount" placeholder="輸入金額 (HKD)" data-i18n-placeholder="amountPlaceholder">
         </div>
 
-        <button onclick="addTransaction()">確認新增</button>
+        <button onclick="addTransaction()" data-i18n="confirmAdd">確認新增</button>
     </div>
 
     <div class="card">
-        <h3>📈 邊項支出最多 (支出分析)</h3>
+        <h3 data-i18n="expenseAnalysis">📈 支出分析</h3>
         <div class="chart-container">
             <canvas id="expenseChart"></canvas>
         </div>
-        
         <div id="analysisReport" style="margin-top: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; border-left: 5px solid #ffc107;">
             目前尚無支出資料可供分析。
         </div>
     </div>
 
     <div class="card">
-        <h3>💰 收入來源分析</h3>
+        <h3 data-i18n="incomeAnalysis">💰 收入來源分析</h3>
         <div class="chart-container">
             <canvas id="incomeChart"></canvas>
         </div>
-        
         <div id="incomeReport" style="margin-top: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; border-left: 5px solid #28a745;">
             目前尚無收入資料可供分析。
         </div>
     </div>
 
     <div class="card">
-        <h3>📝 最近交易紀錄</h3>
-        <ul id="transactionList">
-            </ul>
-        
-        <button onclick="clearAllData()" style="background-color: #dc3545; margin-top: 15px;">🗑️ 清除所有紀錄</button>
+        <h3 data-i18n="recentRecords">📝 最近交易紀錄</h3>
+        <ul id="transactionList"></ul>
+        <button onclick="clearAllData()" style="background-color: #dc3545; margin-top: 15px;" data-i18n="clearAll">🗑️ 清除所有紀錄</button>
+    </div>
+
+    <div style="text-align: center; margin-top: 40px; margin-bottom: 20px;">
+        <a href="https://forms.gle/wq5mujBuZDa4PYfx6" target="_blank">
+            <button style="background-color: #17a2b8; width: auto; padding: 10px 30px; border-radius: 20px;" data-i18n="feedbackBtn">
+                💡 給開發者留言回饋 (Feedback)
+            </button>
+        </a>
     </div>
 
     <script src="script.js"></script>

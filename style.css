@@ -87,3 +87,28 @@ li {
     background-color: #ffe6e6;
     border-radius: 4px;
 }
+
+/* 交易類型按鈕樣式 */
+.type-btn-group {
+    display: flex;
+    gap: 10px;
+}
+.type-btn {
+    flex: 1;
+    margin-top: 0;
+    background-color: #e9ecef;
+    color: #495057;
+    border: 2px solid transparent;
+}
+/* 當按鈕被選中時變色 */
+#btnExpense.active { background-color: #dc3545; color: white; border-color: #c82333; }
+#btnIncome.active { background-color: #28a745; color: white; border-color: #218838; }
+
+/* 語言按鈕樣式 */
+.lang-btn {
+    background-color: #6c757d;
+    width: auto;
+    padding: 8px 15px;
+    margin-top: 0;
+}
+.lang-btn:hover { background-color: #5a6268; }
