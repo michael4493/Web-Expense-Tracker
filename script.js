@@ -39,7 +39,7 @@ const translations = {
 };
 
 let currentLang = 'zh'; 
-let isDarkMode = localStorage.getItem('darkMode') === 'true';
+let isDarkMode = localStorage.getItem('darkMode') === 'false';
 
 // 1. 一鍵切換語言的魔法
 function toggleLanguage() {
@@ -401,3 +401,4 @@ applyBackground();
 applyTheme();
 setTransactionType('expense'); // 網頁打開時，確保選單預設狀態是支出
 updateDashboard();
+

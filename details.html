@@ -3,34 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📄 詳細交易紀錄報表</title>
+    <title>📄詳細交易紀錄報表</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        /* 針對詳細表格的專屬樣式 */
-        .details-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-            background: white;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-        .details-table th, .details-table td {
-            padding: 12px;
-            border-bottom: 1px solid #ddd;
-            text-align: left;
-        }
-        .details-table th {
-            background-color: #f8f9fa;
-            font-weight: bold;
-        }
-        .text-income { color: #28a745; font-weight: bold; }
-        .text-expense { color: #dc3545; font-weight: bold; }
-        
-        /* 支援深色模式的表格樣式 */
-        body.dark-mode .details-table { background: #1e1e1e; color: #e0e0e0; }
-        body.dark-mode .details-table th { background-color: #2d2d2d; border-bottom-color: #444; }
-        body.dark-mode .details-table td { border-bottom-color: #444; }
-    </style>
 </head>
 <body>
     <div style="max-width: 900px; margin: 0 auto; padding: 20px;">
@@ -40,9 +14,9 @@
             <button onclick="toggleLanguage()" class="lang-btn">🌐 EN / 中文</button>
         </div>
 
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h1 data-i18n="detailsTitle" style="margin: 0; color: inherit;">📄 詳細交易紀錄報表</h1>
-            <button onclick="window.close()" data-i18n="closeBtn" style="width: auto; background-color: #6c757d; margin-top: 0;">✖ 關閉分頁</button>
+        <div class="header-container">
+            <h1 data-i18n="detailsTitle">📄 詳細交易紀錄報表</h1>
+            <button onclick="window.close()" data-i18n="closeBtn" class="close-btn">✖ 關閉分頁</button>
         </div>
 
         <div class="card" style="margin-bottom: 20px;">
@@ -101,7 +75,7 @@
         };
 
         let currentLang = 'zh'; 
-        let isDarkMode = localStorage.getItem('darkMode') === 'true';
+        let isDarkMode = localStorage.getItem('darkMode') === 'false';
 
         // --- 👇 新增：語言切換邏輯 👇 ---
         function toggleLanguage() {

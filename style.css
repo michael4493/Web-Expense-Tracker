@@ -1,164 +1,421 @@
+/* 引入 Google 現代黑體字型 */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
+
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f4f7f6;
-    color: #333;
+    font-family: 'Noto Sans TC', 'Segoe UI', Tahoma, sans-serif;
+    background-color: #f0f2f5; /* 更柔和的淺灰色背景 */
+    color: #2c3e50;
     max-width: 800px;
     margin: 0 auto;
     padding: 20px;
+    /* 加入平滑的日夜切換動畫 */
+    transition: background-color 0.5s ease, color 0.5s ease; 
 }
-h1 { text-align: center; color: #2c3e50; }
 
-/* 卡片式設計 */
+/* ==========================================
+   ✨ 頂部大標題美化 (發光排版與字體優化)
+   ========================================== */
+h1 { 
+    text-align: center; 
+    color: #1a252f; 
+    font-weight: 800; /* 加粗字體，更有份量感 */
+    font-size: 2.2rem; /* 稍微放大 */
+    letter-spacing: 2px; /* 拉開字距，增加呼吸感與高級感 */
+    margin-bottom: 30px;
+    /* 巧妙的立體感 + 周圍微微的藍色發光效果 */
+    text-shadow: 2px 4px 6px rgba(0,0,0,0.1), 0 0 20px rgba(52, 152, 219, 0.15);
+    transition: all 0.3s ease;
+}
+
+/* 深色模式下的標題：變成帶有科技感的霓虹微光 */
+body.dark-mode h1 { 
+    color: #f8fafc !important; /* 強制覆蓋，確保在深色模式下是最亮的白 */
+    text-shadow: 2px 4px 8px rgba(0,0,0,0.6), 0 0 20px rgba(59, 130, 246, 0.6) !important;
+}
+
+/* ==========================================
+   📄 報表頁面專屬的頭部排版 (.header-container)
+   ========================================== */
+.header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 2px dashed rgba(0, 0, 0, 0.1); /* 報表專屬的虛線分隔線，超有質感 */
+    transition: border-color 0.3s ease;
+}
+
+.header-container h1 {
+    margin-bottom: 0; /* 清除標題自帶的底部空間，讓它跟按鈕完美對齊 */
+    font-size: 1.8rem; /* 報表頁的標題稍微縮小一點，看起來更精緻 */
+    text-align: left;
+}
+
+/* 深色模式下的分隔線 */
+body.dark-mode .header-container {
+    border-bottom-color: rgba(255, 255, 255, 0.15);
+}
+
+/* ==========================================
+   ✨ 核心：毛玻璃卡片設計 (Glassmorphism)
+   ========================================== */
 .card {
-    background: white;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    margin-bottom: 20px;
+    background: rgba(255, 255, 255, 0.85); /* 半透明白色 */
+    backdrop-filter: blur(12px); /* 模糊背景 (毛玻璃核心) */
+    -webkit-backdrop-filter: blur(12px); /* 支援 Safari */
+    border: 1px solid rgba(255, 255, 255, 0.5); /* 邊緣高光 */
+    padding: 25px;
+    border-radius: 20px; /* 更圓潤的邊角 */
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08); /* 擴散的柔和陰影 */
+    margin-bottom: 25px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease; /* 懸浮動畫準備 */
 }
 
-/* 總結區塊排版 */
+/* 滑鼠移到卡片上時微微浮起 */
+.card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+}
+
+/* ==========================================
+   📊 總結區塊排版 (更現代的膠囊形狀)
+   ========================================== */
 .summary-container {
     display: flex;
     justify-content: space-between;
     text-align: center;
-    margin-bottom: 20px;
+    margin-bottom: 25px;
+    gap: 15px; /* 取代 margin 確保間距完美 */
 }
 .summary-box {
     flex: 1;
-    padding: 15px;
-    margin: 0 5px;
-    border-radius: 8px;
+    padding: 20px 10px;
+    border-radius: 16px;
     font-weight: bold;
+    font-size: 1.1em;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    transition: transform 0.3s ease;
 }
-.bg-income { background-color: #d4edda; color: #155724; }
-.bg-expense { background-color: #f8d7da; color: #721c24; }
-.bg-save { background-color: #cce5ff; color: #004085; }
+.summary-box:hover { transform: scale(1.02); }
 
-/* 表單排版 */
-.form-group { margin-bottom: 15px; }
-label { display: block; margin-bottom: 5px; font-weight: bold; }
-input, select, button {
+.bg-income { background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); color: #155724; }
+.bg-expense { background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%); color: #721c24; }
+.bg-save { background: linear-gradient(135deg, #cce5ff 0%, #b8daff 100%); color: #004085; }
+
+/* ==========================================
+   📝 表單與輸入框 (舒適的焦點回饋)
+   ========================================== */
+.form-group { margin-bottom: 20px; }
+label { display: block; margin-bottom: 8px; font-weight: 500; color: #495057; }
+
+input, select {
     width: 100%;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
+    padding: 12px 15px;
+    border: 1px solid #ced4da;
+    border-radius: 10px;
     box-sizing: border-box;
     font-size: 16px;
+    background-color: rgba(255, 255, 255, 0.9);
+    transition: all 0.3s ease;
+    font-family: inherit;
 }
+
+/* 當點擊輸入框時的發光效果 */
+input:focus, select:focus {
+    outline: none;
+    border-color: #80bdff;
+    box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.15);
+    background-color: #fff;
+}
+
+/* ==========================================
+   🖱️ 按鈕 (圓滑與動態點擊)
+   ========================================== */
 button {
-    background-color: #28a745;
-    color: white;
+    width: 100%;
+    padding: 12px;
     border: none;
+    border-radius: 10px;
+    font-size: 16px;
     cursor: pointer;
-    font-weight: bold;
-    margin-top: 10px;
+    font-weight: 700;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
-button:hover { background-color: #218838; }
 
-/* 圖表與清單排版 */
-.chart-container { position: relative; height: 300px; width: 100%; }
-ul { list-style-type: none; padding: 0; }
-li {
-    background: #fdfdfd;
-    border-left: 5px solid #007bff;
-    margin-bottom: 10px;
-    padding: 10px;
-    border-radius: 4px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    display: flex;
-    justify-content: space-between;
+/* 確認新增按鈕 */
+button[onclick="addTransaction()"] {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+    margin-top: 15px;
 }
-.li-expense { border-left-color: #dc3545; }
-.li-income { border-left-color: #28a745; }
+button[onclick="addTransaction()"]:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+}
+button[onclick="addTransaction()"]:active { transform: translateY(1px); }
 
-/* 專屬單筆刪除按鈕的樣式 */
-.delete-btn {
-    background: none;
-    color: #dc3545;
-    border: none;
-    width: auto;
-    padding: 2px 8px;
-    margin-left: 10px;
-    margin-top: 0;
+/* 其他小按鈕共用樣式 */
+.lang-btn, .theme-btn {
+    border-radius: 20px; /* 藥丸形狀 */
     font-size: 14px;
-}
-.delete-btn:hover {
-    background-color: #ffe6e6;
-    border-radius: 4px;
+    font-weight: 500;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
-/* 交易類型按鈕樣式 */
-.type-btn-group {
-    display: flex;
-    gap: 10px;
-}
+/* 交易類型雙按鈕 */
+.type-btn-group { display: flex; gap: 10px; }
 .type-btn {
     flex: 1;
     margin-top: 0;
-    background-color: #e9ecef;
+    background-color: #f8f9fa;
     color: #495057;
-    border: 2px solid transparent;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
 }
-/* 當按鈕被選中時變色 */
-#btnExpense.active { background-color: #dc3545; color: white; border-color: #c82333; }
-#btnIncome.active { background-color: #28a745; color: white; border-color: #218838; }
+#btnExpense.active { background-color: #dc3545; color: white; border-color: #dc3545; box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3); }
+#btnIncome.active { background-color: #28a745; color: white; border-color: #28a745; box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3); }
 
-/* 語言按鈕樣式 */
-.lang-btn {
-    background-color: #6c757d;
+/* ==========================================
+   📋 圖表與歷史紀錄清單
+   ========================================== */
+.chart-container { position: relative; height: 300px; width: 100%; margin-bottom: 15px; }
+
+ul { list-style-type: none; padding: 0; }
+li {
+    background: rgba(255, 255, 255, 0.9);
+    border-left: 5px solid #007bff;
+    margin-bottom: 12px;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: transform 0.2s ease;
+}
+li:hover { transform: scale(1.01); }
+.li-expense { border-left-color: #ff4757; }
+.li-income { border-left-color: #2ed573; }
+
+.delete-btn {
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+    border-radius: 8px;
     width: auto;
-    padding: 8px 15px;
-    margin-top: 0;
+    padding: 5px 10px;
+    margin-left: 15px;
+    font-size: 14px;
+    box-shadow: none;
 }
-.lang-btn:hover { background-color: #5a6268; }
+.delete-btn:hover { background: #dc3545; color: white; }
 
-/* 👇 新增：主題切換按鈕樣式 */
-.theme-btn {
-    background-color: #343a40;
-    width: auto;
-    padding: 8px 15px;
-    margin-top: 0;
-    color: white;
-}
-.theme-btn:hover { background-color: #23272b; }
-
-/* 👇 新增：深色模式 (Dark Mode) 的專屬外觀 */
+/* ==========================================
+   🌙 深色模式適配 (Dark Mode with Glass)
+   ========================================== */
 body.dark-mode {
-    background-color: #121212;
-    color: #e0e0e0;
+    background-color: #0f172a; /* 現代海軍深藍 */
+    color: #f8fafc;
 }
-body.dark-mode h1 { color: #ffffff; }
+body.dark-mode h1 { color: #f8fafc; }
+body.dark-mode label { color: #cbd5e1; }
 
-/* 讓卡片變成深灰色 */
 body.dark-mode .card,
 body.dark-mode div[style*="background: white"] {
-    background-color: #1e1e1e !important;
-    box-shadow: 0 4px 6px rgba(255,255,255,0.05) !important;
+    background: rgba(30, 41, 59, 0.7) !important; /* 深色毛玻璃 */
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
 }
 
-/* 讓輸入框和下拉選單適應深色 */
 body.dark-mode input, 
 body.dark-mode select {
-    background-color: #2d2d2d;
-    color: #ffffff;
-    border-color: #444;
+    background-color: rgba(15, 23, 42, 0.6);
+    color: #f8fafc;
+    border-color: #334155;
+}
+body.dark-mode input:focus, body.dark-mode select:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
 }
 
-/* 讓歷史紀錄清單適應深色 */
-body.dark-mode li {
-    background-color: #2d2d2d;
-    color: #e0e0e0;
-}
+body.dark-mode li { background: rgba(30, 41, 59, 0.9); border-color: #334155; }
+body.dark-mode .li-expense { border-left-color: #ef4444; }
+body.dark-mode .li-income { border-left-color: #10b981; }
 
-/* 讓總結區塊的文字在深色模式下更清晰 */
-body.dark-mode .bg-income { background-color: #155724; color: #d4edda; }
-body.dark-mode .bg-expense { background-color: #721c24; color: #f8d7da; }
-body.dark-mode .bg-save { background-color: #004085; color: #cce5ff; }
+body.dark-mode .bg-income { background: linear-gradient(135deg, #064e3b 0%, #065f46 100%); color: #6ee7b7; }
+body.dark-mode .bg-expense { background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%); color: #fca5a5; }
+body.dark-mode .bg-save { background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); color: #93c5fd; }
 
-/* 分析報告的背景 */
 body.dark-mode #analysisReport,
 body.dark-mode #incomeReport {
-    background-color: #2d2d2d !important;
-    color: #e0e0e0;
+    background-color: rgba(15, 23, 42, 0.5) !important;
+}
+
+/* ==========================================
+   🌟 頂部切換按鈕美化 (深淺色、中英文)
+   ========================================== */
+.theme-btn, .lang-btn {
+    background: rgba(255, 255, 255, 0.8) !important;
+    backdrop-filter: blur(8px);
+    color: #2c3e50 !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+    padding: 8px 18px !important;
+    border-radius: 20px !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important;
+    margin-left: 10px;
+    width: auto !important;
+    transition: all 0.3s ease !important;
+}
+
+/* 滑鼠懸浮時微微亮起浮動 */
+.theme-btn:hover, .lang-btn:hover {
+    background: #ffffff !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.1) !important;
+}
+
+/* 深色模式下的頂部按鈕 */
+body.dark-mode .theme-btn, body.dark-mode .lang-btn {
+    background: rgba(30, 41, 59, 0.8) !important;
+    color: #f8fafc !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+}
+body.dark-mode .theme-btn:hover, body.dark-mode .lang-btn:hover {
+    background: rgba(51, 65, 85, 0.95) !important;
+}
+
+/* ==========================================
+   💡 底部回饋問卷按鈕美化
+   ========================================== */
+/* 透過強制覆蓋，把原本 HTML 裡的舊設計換成現代化漸層 */
+a[href*="forms.gle"] button {
+    background: linear-gradient(135deg, #17a2b8 0%, #117a8b 100%) !important;
+    color: white !important;
+    border-radius: 25px !important;
+    padding: 12px 35px !important;
+    font-size: 16px !important;
+    font-weight: bold !important;
+    box-shadow: 0 6px 20px rgba(23, 162, 184, 0.3) !important;
+    border: none !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+a[href*="forms.gle"] button:hover {
+    transform: translateY(-3px) !important;
+    box-shadow: 0 8px 25px rgba(23, 162, 184, 0.45) !important;
+}
+
+/* ==========================================
+   📄 詳細報表表格 (毛玻璃升級版)
+   ========================================== */
+.details-table {
+    width: 100%;
+    /* 為了讓表格圓角生效，必須把 border-collapse 改為 separate */
+    border-collapse: separate; 
+    border-spacing: 0;
+    margin-top: 20px;
+    
+    /* 毛玻璃核心特效 */
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 16px;
+    overflow: hidden; /* 確保內容不會超出版界，維持圓角 */
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.details-table th, .details-table td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.details-table th {
+    background-color: rgba(255, 255, 255, 0.4);
+    font-weight: 700;
+    color: #2c3e50;
+}
+
+/* 移除最後一行的底線，看起來更乾淨 */
+.details-table tbody tr:last-child td {
+    border-bottom: none; 
+}
+
+/* 🖱️ 加入互動動畫：滑鼠移過該列時，微微亮起 */
+.details-table tbody tr {
+    transition: background-color 0.3s ease;
+}
+.details-table tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.95);
+}
+
+/* 文字顏色標示 (從 HTML 搬過來的) */
+.text-income { color: #28a745; font-weight: bold; }
+.text-expense { color: #dc3545; font-weight: bold; }
+
+/* ==========================================
+   🌙 深色模式下的毛玻璃表格
+   ========================================== */
+body.dark-mode .details-table { 
+    background: rgba(30, 41, 59, 0.6); 
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+body.dark-mode .details-table th { 
+    background-color: rgba(15, 23, 42, 0.5); 
+    color: #f8fafc;
+    border-bottom-color: rgba(255, 255, 255, 0.05); 
+}
+
+body.dark-mode .details-table td { 
+    border-bottom-color: rgba(255, 255, 255, 0.05); 
+}
+
+body.dark-mode .details-table tbody tr:hover {
+    background-color: rgba(51, 65, 85, 0.8);
+}
+
+/* ==========================================
+   ✖️ 關閉分頁按鈕美化 (.close-btn)
+   ========================================== */
+.close-btn {
+    background: rgba(108, 117, 125, 0.1) !important; /* 微透明的質感灰 */
+    color: #495057 !important;
+    border: 1px solid rgba(108, 117, 125, 0.3) !important;
+    padding: 8px 18px !important;
+    border-radius: 20px !important; /* 圓潤的膠囊狀 */
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    width: auto !important;
+    margin-top: 0 !important;
+    backdrop-filter: blur(8px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* 滑鼠懸浮時：變成警告的紅色，並微微浮起 */
+.close-btn:hover {
+    background: #dc3545 !important;
+    color: white !important;
+    border-color: #dc3545 !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 15px rgba(220, 53, 69, 0.3) !important;
+}
+
+/* 深色模式下的關閉按鈕 */
+body.dark-mode .close-btn {
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: #cbd5e1 !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+body.dark-mode .close-btn:hover {
+    background: #ef4444 !important; /* 深色模式下更亮眼的紅 */
+    color: white !important;
+    border-color: #ef4444 !important;
+    box-shadow: 0 6px 15px rgba(239, 68, 68, 0.4) !important;
 }
