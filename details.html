@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📄 詳細交易紀錄報表</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* 針對詳細表格的專屬樣式 */
+        .details-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .details-table th, .details-table td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+        }
+        .details-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        .text-income { color: #28a745; font-weight: bold; }
+        .text-expense { color: #dc3545; font-weight: bold; }
+        
+        /* 支援深色模式的表格樣式 */
+        body.dark-mode .details-table { background: #1e1e1e; color: #e0e0e0; }
+        body.dark-mode .details-table th { background-color: #2d2d2d; border-bottom-color: #444; }
+        body.dark-mode .details-table td { border-bottom-color: #444; }
+    </style>
+</head>
+<body>
+    <div style="max-width: 900px; margin: 0 auto; padding: 20px;">
+        
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 10px;">
+            <button onclick="toggleTheme()" class="theme-btn" id="themeBtn">🌙 暗色模式</button>
+            <button onclick="toggleLanguage()" class="lang-btn">🌐 EN / 中文</button>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h1 data-i18n="detailsTitle" style="margin: 0; color: inherit;">📄 詳細交易紀錄報表</h1>
+            <button onclick="window.close()" data-i18n="closeBtn" style="width: auto; background-color: #6c757d; margin-top: 0;">✖ 關閉分頁</button>
+        </div>
+
+        <div class="card" style="margin-bottom: 20px;">
+            <label for="filterTime" data-i18n="viewRange" style="font-weight: bold; margin-right: 10px;">📅 選擇查看範圍：</label>
+            <select id="filterTime" onchange="handleFilterChange()" style="width: auto; display: inline-block;">
+                <option value="all" data-i18n="rangeAll">全部紀錄 (All Time)</option>
+                <option value="month" data-i18n="rangeMonth">這個月 (This Month)</option>
+                <option value="week" data-i18n="rangeWeek">最近 7 天 (Last 7 Days)</option>
+                <option value="custom" data-i18n="rangeCustom">自訂範圍 (Custom)</option>
+            </select>
+            
+            <div id="customDateArea" style="display: none; margin-top: 10px;">
+                <input type="date" id="customStartDate" onchange="renderTable()" style="width: auto; display: inline-block;"> 
+                <span data-i18n="to">至</span> 
+                <input type="date" id="customEndDate" onchange="renderTable()" style="width: auto; display: inline-block;">
+            </div>
+        </div>
+
+        <table class="details-table">
+            <thead>
+                <tr>
+                    <th data-i18n="date">日期</th>
+                    <th data-i18n="transactionType">類型</th>
+                    <th data-i18n="category">用途 / 分類</th>
+                    <th data-i18n="accountSource">帳戶 / 來源</th>
+                    <th data-i18n="amountHkd">金額 (HKD)</th>
+                    <th data-i18n="remark">備註</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                </tbody>
+        </table>
+
+    </div>
+
+    <script>
+        // 1. 抓取主畫面存在 LocalStorage 的資料
+        let transactions = JSON.parse(localStorage.getItem('myExpenses')) || [];
+        
+        // --- 👇 新增：完整的翻譯字典 👇 ---
+        const translations = {
+            zh: {
+                detailsTitle: "📄 詳細交易紀錄報表", closeBtn: "✖ 關閉分頁", viewRange: "📅 選擇查看範圍：",
+                rangeAll: "全部紀錄 (All Time)", rangeMonth: "這個月 (This Month)", rangeWeek: "最近 7 天 (Last 7 Days)",
+                rangeCustom: "自訂範圍 (Custom)", to: "至", date: "日期", transactionType: "類型",
+                category: "用途 / 分類", accountSource: "帳戶 / 來源", amountHkd: "金額 (HKD)", remark: "備註",
+                expenseText: "支出💸", incomeText: "收入💰", noData: "此範圍內沒有任何交易紀錄 👻", noRemark: "無"
+            },
+            en: {
+                detailsTitle: "📄 Detailed Transaction Report", closeBtn: "✖ Close Tab", viewRange: "📅 View Range:",
+                rangeAll: "All Time", rangeMonth: "This Month", rangeWeek: "Last 7 Days",
+                rangeCustom: "Custom Range", to: "to", date: "Date", transactionType: "Type",
+                category: "Category", accountSource: "Account / Source", amountHkd: "Amount (HKD)", remark: "Remarks",
+                expenseText: "Expense💸", incomeText: "Income💰", noData: "No transaction records in this range 👻", noRemark: "None"
+            }
+        };
+
+        let currentLang = 'zh'; 
+        let isDarkMode = localStorage.getItem('darkMode') === 'true';
+
+        // --- 👇 新增：語言切換邏輯 👇 ---
+        function toggleLanguage() {
+            currentLang = currentLang === 'zh' ? 'en' : 'zh';
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[currentLang][key]) {
+                    el.innerText = translations[currentLang][key];
+                }
+            });
+            renderTable(); // 重新渲染表格，翻譯裡面動態生成的字
+            applyTheme(); // 更新主題按鈕文字
+        }
+
+        // --- 👇 新增：主題切換邏輯 👇 ---
+        function applyTheme() {
+            const themeBtn = document.getElementById('themeBtn');
+            if (isDarkMode) {
+                document.body.classList.add('dark-mode');
+                themeBtn.innerText = currentLang === 'zh' ? '☀️ 淺色模式' : '☀️ Light Mode';
+            } else {
+                document.body.classList.remove('dark-mode');
+                themeBtn.innerText = currentLang === 'zh' ? '🌙 暗色模式' : '🌙 Dark Mode';
+            }
+        }
+
+        function toggleTheme() {
+            isDarkMode = !isDarkMode; 
+            localStorage.setItem('darkMode', isDarkMode); 
+            applyTheme();
+        }
+
+        // --- 👇 繼承背景圖片邏輯 👇 ---
+        function applyBackground() {
+            const savedBg = localStorage.getItem('myBgImage');
+            if (savedBg) {
+                document.body.style.backgroundImage = `url(${savedBg})`;
+                document.body.style.backgroundSize = 'cover';
+                document.body.style.backgroundAttachment = 'fixed';
+                document.body.style.backgroundPosition = 'center';
+            }
+        }
+
+        // 金錢格式化小工具
+        function formatMoney(num) {
+            return parseFloat(num.toFixed(2)).toLocaleString('en-US');
+        }
+
+        // 英式日期轉換小工具
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            const parts = dateString.split('-');
+            if (parts.length === 3) {
+                return `${parts[2]}/${parts[1]}/${parts[0]}`;
+            }
+            return dateString;
+        }
+
+        // 控制自訂日期框顯示
+        function handleFilterChange() {
+            const filterVal = document.getElementById('filterTime').value;
+            const customArea = document.getElementById('customDateArea');
+            customArea.style.display = (filterVal === 'custom') ? 'block' : 'none';
+            renderTable();
+        }
+
+        // 核心渲染表格邏輯
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = ''; 
+
+            const filterVal = document.getElementById('filterTime').value;
+            const today = new Date();
+
+            let filtered = transactions.filter(t => {
+                if (filterVal === 'all') return true;
+                const tDate = new Date(t.date);
+                if (filterVal === 'month') {
+                    return tDate.getMonth() === today.getMonth() && tDate.getFullYear() === today.getFullYear();
+                }
+                if (filterVal === 'week') {
+                    const diffTime = today - tDate;
+                    const diffDays = diffTime / (1000 * 60 * 60 * 24);
+                    return diffDays >= 0 && diffDays <= 7;
+                }
+                if (filterVal === 'custom') {
+                    const startVal = document.getElementById('customStartDate').value;
+                    const endVal = document.getElementById('customEndDate').value;
+                    if (!startVal || !endVal) return true;
+                    const startDate = new Date(startVal); startDate.setHours(0, 0, 0, 0);
+                    const endDate = new Date(endVal); endDate.setHours(23, 59, 59, 999);
+                    return tDate >= startDate && tDate <= endDate;
+                }
+            });
+
+            filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            // 防呆支援多語系
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #6c757d; padding: 20px;">${translations[currentLang].noData}</td></tr>`;
+                return;
+            }
+
+            filtered.forEach(t => {
+                const tr = document.createElement('tr');
+                
+                // 動態文字支援多語系
+                const typeText = t.type === 'expense' ? translations[currentLang].expenseText : translations[currentLang].incomeText;
+                const amountClass = t.type === 'expense' ? 'text-expense' : 'text-income';
+                const amountPrefix = t.type === 'expense' ? '-' : '+';
+                const remarkText = t.remark ? t.remark : `<span style="color: #ccc;">${translations[currentLang].noRemark}</span>`;
+
+                tr.innerHTML = `
+                    <td>${formatDate(t.date)}</td>
+                    <td>${typeText}</td>
+                    <td>${t.category}</td>
+                    <td>${t.account}</td>
+                    <td class="${amountClass}">${amountPrefix} $${formatMoney(t.amount)}</td>
+                    <td>${remarkText}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // 初始化啟動區
+        applyBackground();
+        applyTheme();
+        renderTable();
+    </script>
+</body>
+</html>

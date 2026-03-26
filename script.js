@@ -8,7 +8,7 @@ const translations = {
         category: "用途 / 分類", accountSource: "帳戶 / 來源", amount: "金額",
         amountPlaceholder: "輸入金額 (HKD)", confirmAdd: "確認新增",
         expenseAnalysis: "📈 支出分析", noExpenseData: "目前尚無支出資料可供分析 💸",
-        incomeAnalysis: "💰 收入來源分析", noIncomeData: "目前尚無收入資料可供分析 💸",
+        incomeAnalysis: "💰 收入來源分析", noIncomeData: "目前尚無收入資料可供分析 💰",
         recentRecords: "📝 最近交易紀錄", clearAll: "🗑️ 清除所有紀錄",
         feedbackBtn: "💡 給開發者留言回饋 (Feedback)",
         expenseHighlight: "支出重點", incomeHighlight: "收入重點",
@@ -26,7 +26,7 @@ const translations = {
         category: "Category", accountSource: "Account / Source", amount: "Amount",
         amountPlaceholder: "Enter Amount (HKD)", confirmAdd: "Confirm Add",
         expenseAnalysis: "📈 Expense Analysis", noExpenseData: "No expense data available for analysis 💸",
-        incomeAnalysis: "💰 Income Analysis", noIncomeData: "No income data available for analysis 💸",
+        incomeAnalysis: "💰 Income Analysis", noIncomeData: "No income data available for analysis 💰",
         recentRecords: "📝 Recent Records", clearAll: "🗑️ Clear All Records",
         feedbackBtn: "💡 Give Feedback",
         expenseHighlight: "Expense Focus", incomeHighlight: "Income Focus",
@@ -100,13 +100,13 @@ function setTransactionType(type) {
     }
 }
 
-// 3. 新增交易的主要 Function
+// 3. 交易的主要 Function
 function addTransaction() {
     const date = document.getElementById('inputDate').value;
     const type = document.getElementById('inputType').value;
     const account = document.getElementById('inputAccount').value;
     const category = document.getElementById('inputCategory').value;
-    const amount = parseFloat(document.getElementById('inputAmount').value);
+    const amount = Math.round(parseFloat(document.getElementById('inputAmount').value) * 100) / 100;
     const remark = document.getElementById('inputRemark').value;
 
     if (!date || isNaN(amount) || amount <= 0) {
@@ -133,7 +133,7 @@ function addTransaction() {
     updateDashboard();
 }
 
-// 4. 更新畫面的 Function (✨ 代碼清理：移除了舊的 repay/lend 邏輯)
+// 4. 更新畫面的 Function 
 function updateDashboard() {
     let totalIncome = 0;
     let totalExpense = 0;
@@ -201,19 +201,18 @@ function updateDashboard() {
 
         li.innerHTML = `
             <span>
-                <strong>${t.date}</strong> | ${t.account} -> ${t.category}
+                <strong>${formatDate(t.date)}</strong> | ${t.account} -> ${t.category}
                 ${remarkText} </span>
             <span>
-                $${t.amount}
-                <button class="delete-btn" onclick="deleteTransaction(${t.id})">❌</button>
+                $${formatMoney(t.amount)} <button class="delete-btn" onclick="deleteTransaction(${t.id})">❌</button>
             </span>
         `;
         listEl.prepend(li); 
     });
 
-    document.getElementById('totalIncome').innerText = totalIncome;
-    document.getElementById('totalExpense').innerText = totalExpense;
-    document.getElementById('totalBalance').innerText = totalIncome - totalExpense;
+    document.getElementById('totalIncome').innerText = formatMoney(totalIncome);
+    document.getElementById('totalExpense').innerText = formatMoney(totalExpense);
+    document.getElementById('totalBalance').innerText = formatMoney(totalIncome - totalExpense);
 
     expenseChartInstance = drawChart('expenseChart', expenseData, expenseChartInstance);
     incomeChartInstance = drawChart('incomeChart', incomeData, incomeChartInstance);
@@ -222,7 +221,7 @@ function updateDashboard() {
     generateAnalysis(incomeData, totalIncome, 'incomeReport', translations[currentLang].incomeHighlight, '#28a745', translations[currentLang].noIncomeData);
 }
 
-// 5. 繪製圖表的通用 Function (✨ 增加了更多顏色，避免自訂分類太多導致顏色破圖)
+// 5. 繪製圖表的通用 Function 
 function drawChart(canvasId, dataObj, chartInstance) {
     const ctx = document.getElementById(canvasId).getContext('2d');
     if (chartInstance) { chartInstance.destroy(); }
@@ -260,7 +259,7 @@ function generateAnalysis(dataObj, totalAmt, targetId, highlightName, colorHex, 
     let detailsHTML = "<ul style='padding-left: 20px; margin-top: 10px;'>";
 
     for (const category in dataObj) {
-        const amount = dataObj[category];
+        const amount = parseFloat(dataObj[category].toFixed(2));
         const percentage = Math.round((amount / totalAmt) * 100);
         detailsHTML += `<li style="margin-bottom: 5px; border-left: none; padding: 0; box-shadow: none; background: none;">
                             <strong>${category}</strong>: $${amount} (${percentage}%)
@@ -270,7 +269,12 @@ function generateAnalysis(dataObj, totalAmt, targetId, highlightName, colorHex, 
             maxCategory = category;
         }
     }
-    detailsHTML += "</ul>";
+
+    const amount = dataObj[category];
+    const percentage = Math.round((amount / totalAmt) * 100);
+    detailsHTML += `<li style="margin-bottom: 5px; border-left: none; padding: 0; box-shadow: none; background: none;">
+                        <strong>${category}</strong>: $${formatMoney(amount)} (${percentage}%)
+                    </li>`;
 
     const textMaxSource = translations[currentLang].maxSource;
     const textTotalAmt = translations[currentLang].totalAmt;
@@ -278,7 +282,7 @@ function generateAnalysis(dataObj, totalAmt, targetId, highlightName, colorHex, 
 
     reportEl.innerHTML = `
         <div style="font-size: 16px; margin-bottom: 10px;">
-            💡 <strong>${highlightName}：</strong> ${textMaxSource}「<span style="color: ${colorHex}; font-weight: bold;">${maxCategory}</span>」，${textTotalAmt} <strong>$${maxAmount}</strong>！
+            💡 <strong>${highlightName}：</strong> ${textMaxSource}「<span style="color: ${colorHex}; font-weight: bold;">${maxCategory}</span>」，${textTotalAmt} <strong>$${formatMoney(maxAmount)}</strong>！
         </div>
         <div><strong>📊 ${textDetailRatio}：</strong></div>
         ${detailsHTML}
@@ -375,7 +379,22 @@ function clearBackground() {
     applyBackground(); // 重新套用（這時會變回原本的單色背景）
 }
 
-// 15. 網頁一打開時，記得呼叫套用背景
+// 15. 金錢格式化小工具 (自動加上千位逗號，並處理好小數點)
+function formatMoney(num) {
+    return parseFloat(num.toFixed(2)).toLocaleString('en-US');
+}
+
+// 16. 英式日期轉換小工具 (把 YYYY-MM-DD 變成 DD/MM/YYYY)
+function formatDate(dateString) {
+    if (!dateString) return '';
+    const parts = dateString.split('-'); // 把日期用「-」切開
+    if (parts.length === 3) {
+        return `${parts[2]}/${parts[1]}/${parts[0]}`; // 重新排列成 日/月/年
+    }
+    return dateString;
+}
+
+// 網頁一打開時，記得呼叫套用背景
 applyBackground();
 
 // 初始化啟動區

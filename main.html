@@ -64,19 +64,21 @@
             <select id="inputCategory">
                 <optgroup label="支出用途" id="optExpense">  
                     <option value="Meal">Meal🥔🍳🧋</option>
-                    <option value="Online Shopping">Online Shopping🛍️</option>
-                    <option value="Shopping">Shopping👜 (makeup, bag, clothes...)</option>
                     <option value="Entertainment">Entertainment🎮 (娛樂)</option>
-                    <option value="Travel">Travel🚋</option>
+                    <option value="Shopping">Shopping👜 (makeup, bag, clothes...)</option>
+                    <option value="Online Shopping">Online Shopping🛍️</option>
                     <option value="Taxi">Uber/Taxi🚕</option>
                     <option value="In Octopus">In Octopus🐙</option>
                     <option value="Nail">Nail💅</option>
                     <option value="Credit Card Bill">找卡數💳 (Credit Card Bill)</option>
-                    <option value="Other">其他📝</option>
+                    <option value="Travel">Travel🚋</option>
+                    <option value="Other">Other📝</option>
                 </optgroup>
                 <optgroup label="收入來源" id="optIncome">
-                    <option value="Income">收入🪙</option>
-                    <option value="Other">其他📝</option>    
+                    <option value="Salary">Salary🪙</option>
+                    <option value="Scholarship">Scholarship💯</option>
+                    <option value="Gift">Gift🫴</option>
+                    <option value="Other">Other📝</option>    
                 </optgroup>                
             </select>
         </div>
@@ -99,7 +101,6 @@
                     <option value="Mum">Mum👺</option>
                     <option value="Michael">Michael👦</option>
                     <option value="Grandma">Grandma👵</option>
-                    <option value="Salary">Salary💹</option>
                     <option value="Other">Other📝</option>
                 </optgroup>
             </select>
@@ -124,7 +125,7 @@
             <canvas id="expenseChart"></canvas>
         </div>
         <div id="analysisReport" style="margin-top: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; border-left: 5px solid #ffc107;">
-            目前尚無支出資料可供分析。
+            目前尚無支出資料可供分析
         </div>
     </div>
 
@@ -134,13 +135,20 @@
             <canvas id="incomeChart"></canvas>
         </div>
         <div id="incomeReport" style="margin-top: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; border-left: 5px solid #28a745;">
-            目前尚無收入資料可供分析。
+            目前尚無收入資料可供分析
         </div>
     </div>
 
     <div class="card">
-        <h3 data-i18n="recentRecords">📝 最近交易紀錄</h3>
-        <ul id="transactionList"></ul>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h3 data-i18n="recentRecords" style="margin: 0;">📝 最近交易紀錄</h3>
+            
+            <button onclick="window.open('details.html', '_blank')" style="width: auto; background-color: #007bff; margin-top: 0; padding: 8px 15px;">
+                📄 詳細檢視
+            </button>
+        </div>
+        
+        <ul id="transactionList" style="margin-top: 15px;"></ul>
         <button onclick="clearAllData()" style="background-color: #dc3545; margin-top: 15px;" data-i18n="clearAll">🗑️ 清除所有紀錄</button>
     </div>
 
