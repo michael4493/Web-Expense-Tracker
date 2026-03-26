@@ -3,13 +3,14 @@
 
 body {
     font-family: 'Noto Sans TC', 'Segoe UI', Tahoma, sans-serif;
-    background-color: #f0f2f5; /* 更柔和的淺灰色背景 */
+    /* 👇 淺色模式魔法：從單調灰變成「薄荷撞櫻花粉」的極光漸層 */
+    background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+    background-attachment: fixed; /* 讓背景固定，滾動時才有玻璃滑過的感覺 */
     color: #2c3e50;
     max-width: 800px;
     margin: 0 auto;
     padding: 20px;
-    /* 加入平滑的日夜切換動畫 */
-    transition: background-color 0.5s ease, color 0.5s ease; 
+    transition: background 0.5s ease, color 0.5s ease; 
 }
 
 /* ==========================================
@@ -17,13 +18,13 @@ body {
    ========================================== */
 h1 { 
     text-align: center; 
-    color: #1a252f; 
-    font-weight: 800; /* 加粗字體，更有份量感 */
-    font-size: 2.2rem; /* 稍微放大 */
-    letter-spacing: 2px; /* 拉開字距，增加呼吸感與高級感 */
+    color: #2c3e50; 
+    font-weight: 800; 
+    font-size: 2.2rem; 
+    letter-spacing: 2px; 
     margin-bottom: 30px;
-    /* 巧妙的立體感 + 周圍微微的藍色發光效果 */
-    text-shadow: 2px 4px 6px rgba(0,0,0,0.1), 0 0 20px rgba(52, 152, 219, 0.15);
+    /* 👇 淺色模式專屬：改成白色的質感光暈，讓字體看起來像浮在極光上 */
+    text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.8), 0 0 20px rgba(255, 255, 255, 0.9);
     transition: all 0.3s ease;
 }
 
@@ -61,15 +62,17 @@ body.dark-mode .header-container {
    ✨ 核心：毛玻璃卡片設計 (Glassmorphism)
    ========================================== */
 .card {
-    background: rgba(255, 255, 255, 0.85); /* 半透明白色 */
-    backdrop-filter: blur(12px); /* 模糊背景 (毛玻璃核心) */
-    -webkit-backdrop-filter: blur(12px); /* 支援 Safari */
-    border: 1px solid rgba(255, 255, 255, 0.5); /* 邊緣高光 */
+    /* 👇 讓白色變得更透明 (從 0.85 降到 0.55)，透出極光背景 */
+    background: rgba(255, 255, 255, 0.55); 
+    backdrop-filter: blur(16px); /* 增加模糊度，讓透出來的光更柔和 */
+    -webkit-backdrop-filter: blur(16px); 
+    border: 1px solid rgba(255, 255, 255, 0.8); /* 加強白色高光邊框 */
+    /* ... 後面原本的 padding, border-radius 等設定維持不變 ... */
     padding: 25px;
-    border-radius: 20px; /* 更圓潤的邊角 */
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08); /* 擴散的柔和陰影 */
+    border-radius: 20px; 
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.07); /* 陰影加上一點點神祕的藍紫色調 */
     margin-bottom: 25px;
-    transition: transform 0.3s ease, box-shadow 0.3s ease; /* 懸浮動畫準備 */
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 /* 滑鼠移到卡片上時微微浮起 */
@@ -313,19 +316,18 @@ a[href*="forms.gle"] button:hover {
    ========================================== */
 .details-table {
     width: 100%;
-    /* 為了讓表格圓角生效，必須把 border-collapse 改為 separate */
     border-collapse: separate; 
     border-spacing: 0;
     margin-top: 20px;
     
-    /* 毛玻璃核心特效 */
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    /* 👇 讓表格也變透明 (從 0.7 降到 0.5) */
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     border-radius: 16px;
-    overflow: hidden; /* 確保內容不會超出版界，維持圓角 */
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.5);
+    overflow: hidden; 
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.8);
 }
 
 .details-table th, .details-table td {
