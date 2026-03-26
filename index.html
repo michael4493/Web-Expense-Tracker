@@ -63,15 +63,16 @@
             <label data-i18n="category">用途 / 分類</label>
             <select id="inputCategory">
                 <optgroup label="支出用途" id="optExpense">  
-                    <option value="Breakfast">Meal🥔🍳🧋</option>
+                    <option value="Meal">Meal🥔🍳🧋</option>
                     <option value="Online Shopping">Online Shopping🛍️</option>
                     <option value="Shopping">Shopping👜 (makeup, bag, clothes...)</option>
-                    <option value="Playing">Entertainment🎮 (娛樂)</option>
+                    <option value="Entertainment">Entertainment🎮 (娛樂)</option>
                     <option value="Travel">Travel🚋</option>
                     <option value="Taxi">Uber/Taxi🚕</option>
                     <option value="In Octopus">In Octopus🐙</option>
                     <option value="Nail">Nail💅</option>
                     <option value="Credit Card Bill">找卡數💳 (Credit Card Bill)</option>
+                    <option value="Other">其他📝</option>
                 </optgroup>
                 <optgroup label="收入來源" id="optIncome">
                     <option value="Income">收入🪙</option>
@@ -141,6 +142,14 @@
         <h3 data-i18n="recentRecords">📝 最近交易紀錄</h3>
         <ul id="transactionList"></ul>
         <button onclick="clearAllData()" style="background-color: #dc3545; margin-top: 15px;" data-i18n="clearAll">🗑️ 清除所有紀錄</button>
+    </div>
+
+    <div class="card" style="text-align: center; margin-bottom: 20px; padding: 15px;">
+        <label data-i18n="customBg" style="display: inline-block; font-weight: bold; margin-right: 10px;">自訂背景圖片：</label>
+        
+        <input type="file" id="bgInput" accept="image/*" onchange="changeBackground(event)" style="display: inline-block; width: auto; padding: 5px; border: none;">
+        
+        <button onclick="clearBackground()" style="background-color: #6c757d; width: auto; padding: 8px 15px; margin-left: 10px; border-radius: 6px;" data-i18n="clearBg">清除背景</button>
     </div>
 
     <div style="text-align: center; margin-top: 40px; margin-bottom: 20px;">

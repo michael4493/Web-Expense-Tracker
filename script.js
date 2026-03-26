@@ -14,7 +14,9 @@ const translations = {
         expenseHighlight: "支出重點", incomeHighlight: "收入重點",
         maxSource: "最大的來源是", totalAmt: "總共", detailRatio: "各項目詳細佔比",
         alertInput: "請填寫正確的日期與金額！", alertDel: "確定要刪除這筆單一紀錄嗎？", alertClear: "確定要清除所有的記帳紀錄嗎？這個動作無法復原喔！",
-        remark: "備註 (選填)", remarkPlaceholder: "輸入備註細節..."
+        remark: "備註 (選填)", remarkPlaceholder: "輸入備註細節...",
+        customBg: "自訂背景圖片：", clearBg: "清除背景", alertBgSize: "圖片檔案太大，無法儲存！請選擇小於 2MB 的圖片。",
+
     },
     en: {
         appTitle: "💰 Web Expense Tracker🐛 💰", totalIncome: "Total Income", totalExpense: "Total Expense",
@@ -30,7 +32,9 @@ const translations = {
         expenseHighlight: "Expense Focus", incomeHighlight: "Income Focus",
         maxSource: "Top source is", totalAmt: "Total", detailRatio: "Detailed Ratio",
         alertInput: "Please enter a valid date and amount!", alertDel: "Are you sure you want to delete this record?", alertClear: "Are you sure you want to clear ALL records? This cannot be undone!",
-        remark: "Remarks (Optional)", remarkPlaceholder: "Enter details..."
+        remark: "Remarks (Optional)", remarkPlaceholder: "Enter details...",
+        customBg: "Custom Background: ", clearBg: "Clear Background", alertBgSize: "Image file is too large to save! Please choose an image smaller than 2MB.",
+
     }
 };
 
@@ -329,6 +333,50 @@ function toggleTheme() {
     localStorage.setItem('darkMode', isDarkMode); 
     applyTheme();
 }
+
+// 12. 讀取並應用儲存的背景圖片
+function applyBackground() {
+    const savedBg = localStorage.getItem('myBgImage');
+    if (savedBg) {
+        document.body.style.backgroundImage = `url(${savedBg})`;
+        document.body.style.backgroundSize = 'cover';
+        document.body.style.backgroundAttachment = 'fixed';
+        document.body.style.backgroundPosition = 'center';
+    } else {
+        document.body.style.backgroundImage = 'none';
+    }
+}
+
+// 13. 處理使用者上傳圖片
+function changeBackground(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader(); // 召喚可以讀取檔案的魔法
+        reader.onload = function(e) {
+            const base64Data = e.target.result; // 將圖片轉成超長字串
+            try {
+                // 嘗試存入大腦 (LocalStorage)
+                localStorage.setItem('myBgImage', base64Data);
+                applyBackground(); // 立刻套用背景
+            } catch (err) {
+                // ⚠️ 防呆機制：LocalStorage 最大只能存 5MB
+                alert(translations[currentLang].alertBgSize);
+                document.getElementById('bgInput').value = ''; // 清空輸入框
+            }
+        };
+        reader.readAsDataURL(file); // 開始讀取檔案
+    }
+}
+
+// 14. 清除背景
+function clearBackground() {
+    localStorage.removeItem('myBgImage'); // 從大腦刪除
+    document.getElementById('bgInput').value = ''; // 清空輸入框
+    applyBackground(); // 重新套用（這時會變回原本的單色背景）
+}
+
+// 15. 網頁一打開時，記得呼叫套用背景
+applyBackground();
 
 // 初始化啟動區
 applyTheme();
