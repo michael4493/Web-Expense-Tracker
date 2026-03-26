@@ -8,8 +8,8 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-    <div style="text-align: right; margin-bottom: 10px;">
+    <div style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 10px;">
+        <button onclick="toggleTheme()" class="theme-btn" id="themeBtn">🌙 暗色模式</button>
         <button onclick="toggleLanguage()" class="lang-btn">🌐 EN / 中文</button>
     </div>
 
@@ -107,6 +107,11 @@
         <div class="form-group">
             <label data-i18n="amount">金額</label>
             <input type="number" id="inputAmount" placeholder="輸入金額 (HKD)" data-i18n-placeholder="amountPlaceholder">
+        </div>
+
+        <div class="form-group">
+            <label data-i18n="remark">備註 (選填)</label>
+            <input type="text" id="inputRemark" placeholder="輸入備註細節..." data-i18n-placeholder="remarkPlaceholder">
         </div>
 
         <button onclick="addTransaction()" data-i18n="confirmAdd">確認新增</button>

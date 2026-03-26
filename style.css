@@ -112,3 +112,53 @@ li {
     margin-top: 0;
 }
 .lang-btn:hover { background-color: #5a6268; }
+
+/* 👇 新增：主題切換按鈕樣式 */
+.theme-btn {
+    background-color: #343a40;
+    width: auto;
+    padding: 8px 15px;
+    margin-top: 0;
+    color: white;
+}
+.theme-btn:hover { background-color: #23272b; }
+
+/* 👇 新增：深色模式 (Dark Mode) 的專屬外觀 */
+body.dark-mode {
+    background-color: #121212;
+    color: #e0e0e0;
+}
+body.dark-mode h1 { color: #ffffff; }
+
+/* 讓卡片變成深灰色 */
+body.dark-mode .card,
+body.dark-mode div[style*="background: white"] {
+    background-color: #1e1e1e !important;
+    box-shadow: 0 4px 6px rgba(255,255,255,0.05) !important;
+}
+
+/* 讓輸入框和下拉選單適應深色 */
+body.dark-mode input, 
+body.dark-mode select {
+    background-color: #2d2d2d;
+    color: #ffffff;
+    border-color: #444;
+}
+
+/* 讓歷史紀錄清單適應深色 */
+body.dark-mode li {
+    background-color: #2d2d2d;
+    color: #e0e0e0;
+}
+
+/* 讓總結區塊的文字在深色模式下更清晰 */
+body.dark-mode .bg-income { background-color: #155724; color: #d4edda; }
+body.dark-mode .bg-expense { background-color: #721c24; color: #f8d7da; }
+body.dark-mode .bg-save { background-color: #004085; color: #cce5ff; }
+
+/* 分析報告的背景 */
+body.dark-mode #analysisReport,
+body.dark-mode #incomeReport {
+    background-color: #2d2d2d !important;
+    color: #e0e0e0;
+}
