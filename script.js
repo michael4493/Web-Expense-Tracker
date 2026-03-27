@@ -46,6 +46,9 @@ auth.onAuthStateChanged((user) => {
     } else {
         // ❌ 尚未登入，或已經登出
         currentUser = null;
+        transactions = []; // 登出時把畫面上的資料清空，保護隱私
+        updateDashboard(); // 重新渲染成空畫面
+
         userInfoDiv.innerHTML = `
             <button onclick="loginWithGoogle()" class="theme-btn" style="background: #4285F4; color: white; border: none; box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3) !important;">
                 🔒 Google 登入 (Login)
@@ -100,6 +103,36 @@ const translations = {
 let currentLang = 'zh'; 
 let isDarkMode = localStorage.getItem('darkMode') === 'true';
 
+// 啟動 LocalStorage
+//let transactions = JSON.parse(localStorage.getItem('myExpenses')) || [];
+
+// 雲端記憶宣告與讀取
+let transactions = []; // 一開始先清空，等登入後再去雲端抓
+
+// 這是一個向雲端索取資料的專屬 Function
+async function fetchTransactionsFromCloud() {
+    if (!currentUser) return; // 沒登入就不能抓資料
+    
+    try {
+        // 去雲端找「這個人(uid)」專屬的「transactions」資料夾
+        const snapshot = await db.collection('users').doc(currentUser.uid).collection('transactions').get();
+        
+        // 把抓下來的資料轉換成我們熟悉的陣列格式
+        transactions = snapshot.docs.map(doc => {
+            const data = doc.data();
+            data.id = doc.id; // Firebase 會自動產生亂碼 ID，我們把它記下來
+            return data;
+        });
+        
+        updateDashboard(); // 資料抓完，更新畫面！
+    } catch (error) {
+        console.error("讀取資料失敗：", error);
+    }
+}
+
+let expenseChartInstance = null; 
+let incomeChartInstance = null;
+
 // 1. 一鍵切換語言的魔法
 function toggleLanguage() {
     currentLang = currentLang === 'zh' ? 'en' : 'zh';
@@ -120,13 +153,7 @@ function toggleLanguage() {
     
     updateDashboard(); 
     applyTheme(); 
-}
-
-// 啟動 LocalStorage
-let transactions = JSON.parse(localStorage.getItem('myExpenses')) || [];
-
-let expenseChartInstance = null; 
-let incomeChartInstance = null;  
+}  
 
 // 設定今日預設日期
 document.getElementById('inputDate').valueAsDate = new Date();
@@ -159,8 +186,46 @@ function setTransactionType(type) {
     }
 }
 
-// 3. 交易的主要 Function
-function addTransaction() {
+// // 3. 交易的主要 Function
+// function addTransaction() {
+//     const date = document.getElementById('inputDate').value;
+//     const type = document.getElementById('inputType').value;
+//     const account = document.getElementById('inputAccount').value;
+//     const category = document.getElementById('inputCategory').value;
+//     const amount = Math.round(parseFloat(document.getElementById('inputAmount').value) * 100) / 100;
+//     const remark = document.getElementById('inputRemark').value;
+
+//     if (!date || isNaN(amount) || amount <= 0) {
+//         alert(translations[currentLang].alertInput);
+//         return;
+//     }
+
+//     const transaction = {
+//         id: Date.now(),
+//         date: date,
+//         type: type, // 現在只有 'expense' 或 'income'
+//         account: account,
+//         category: category,
+//         amount: amount,
+//         remark: remark,
+//     };
+
+//     transactions.push(transaction);
+//     localStorage.setItem('myExpenses', JSON.stringify(transactions));
+
+//     document.getElementById('inputAmount').value = '';
+//     document.getElementById('inputRemark').value = '';
+
+//     updateDashboard();
+// }
+
+// 3. 雲端版：新增交易
+async function addTransaction() {
+    if (!currentUser) {
+        alert("請先登入 Google 帳號才能記帳喔！");
+        return;
+    }
+
     const date = document.getElementById('inputDate').value;
     const type = document.getElementById('inputType').value;
     const account = document.getElementById('inputAccount').value;
@@ -173,23 +238,23 @@ function addTransaction() {
         return;
     }
 
-    const transaction = {
-        id: Date.now(),
-        date: date,
-        type: type, // 現在只有 'expense' 或 'income'
-        account: account,
-        category: category,
-        amount: amount,
-        remark: remark,
-    };
+    // 準備好要上傳的資料包 (不需要自己寫 id 了，Firebase 會給)
+    const transactionData = { date, type, account, category, amount, remark };
 
-    transactions.push(transaction);
-    localStorage.setItem('myExpenses', JSON.stringify(transactions));
+    try {
+        // 上傳到雲端！
+        const docRef = await db.collection('users').doc(currentUser.uid).collection('transactions').add(transactionData);
+        
+        // 上傳成功後，把雲端給的 ID 塞進去，並加到畫面陣列裡
+        transactionData.id = docRef.id;
+        transactions.push(transactionData);
 
-    document.getElementById('inputAmount').value = '';
-    document.getElementById('inputRemark').value = '';
-
-    updateDashboard();
+        document.getElementById('inputAmount').value = '';
+        document.getElementById('inputRemark').value = '';
+        updateDashboard();
+    } catch (error) {
+        alert("新增失敗：" + error.message);
+    }
 }
 
 // 4. 更新畫面的 Function 
@@ -263,7 +328,7 @@ function updateDashboard() {
                 <strong>${formatDate(t.date)}</strong> | ${t.account} -> ${t.category}
                 ${remarkText} </span>
             <span>
-                $${formatMoney(t.amount)} <button class="delete-btn" onclick="deleteTransaction(${t.id})">❌</button>
+                $${formatMoney(t.amount)} <button class="delete-btn" onclick="deleteTransaction('${t.id}')">❌</button>
             </span>
         `;
         listEl.prepend(li); 
@@ -348,21 +413,60 @@ function generateAnalysis(dataObj, totalAmt, targetId, highlightName, colorHex, 
     `;
 }
 
-// 7. 單筆刪除
-function deleteTransaction(id) {
+// // 7. 單筆刪除
+// function deleteTransaction(id) {
+//     if (confirm(translations[currentLang].alertDel)) {
+//         transactions = transactions.filter(t => t.id !== id);
+//         localStorage.setItem('myExpenses', JSON.stringify(transactions));
+//         updateDashboard();
+//     }
+// }
+
+// 7. 雲端版：單筆刪除
+async function deleteTransaction(id) {
+    if (!currentUser) return;
+    
     if (confirm(translations[currentLang].alertDel)) {
-        transactions = transactions.filter(t => t.id !== id);
-        localStorage.setItem('myExpenses', JSON.stringify(transactions));
-        updateDashboard();
+        try {
+            // 告訴雲端：刪除這個 ID 的文件
+            await db.collection('users').doc(currentUser.uid).collection('transactions').doc(id).delete();
+            
+            // 雲端刪除成功後，再把畫面上的也過濾掉
+            transactions = transactions.filter(t => t.id !== id);
+            updateDashboard();
+        } catch(error) {
+            alert("刪除失敗：" + error.message);
+        }
     }
 }
 
-// 8. 清除所有
-function clearAllData() {
+// // 8. 清除所有
+// function clearAllData() {
+//     if (confirm(translations[currentLang].alertClear)) {
+//         localStorage.removeItem('myExpenses');
+//         transactions = [];
+//         updateDashboard();
+//     }
+// }
+
+// 8. 雲端版：清除所有
+async function clearAllData() {
+    if (!currentUser) return;
+
     if (confirm(translations[currentLang].alertClear)) {
-        localStorage.removeItem('myExpenses');
-        transactions = [];
-        updateDashboard();
+        try {
+            // Firebase 不支援「一鍵刪除整個資料夾」，我們必須把檔案包成一包 (batch) 批次刪除
+            const snapshot = await db.collection('users').doc(currentUser.uid).collection('transactions').get();
+            const batch = db.batch();
+            snapshot.docs.forEach(doc => batch.delete(doc.ref));
+            
+            await batch.commit(); // 執行批次刪除
+            
+            transactions = [];
+            updateDashboard();
+        } catch(error) {
+            alert("清除失敗：" + error.message);
+        }
     }
 }
 
