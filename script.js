@@ -2,13 +2,13 @@
 // 🔥 Firebase 雲端基地初始化
 // ==========================================
 const firebaseConfig = {
-  apiKey: "AIzaSyDfczo3Rkwe0OXijJUynLMM1Fb9c1FctSI",
-  authDomain: "web-expense-tracker-1dbb4.firebaseapp.com",
-  databaseURL: "https://web-expense-tracker-1dbb4-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "web-expense-tracker-1dbb4",
-  storageBucket: "web-expense-tracker-1dbb4.firebasestorage.app",
-  messagingSenderId: "749226836398",
-  appId: "1:749226836398:web:7a5d5995ab85394fccc83f"
+    apiKey: "AIzaSyDfczo3Rkwe0OXijJUynLMM1Fb9c1FctSI",
+    authDomain: "web-expense-tracker-1dbb4.firebaseapp.com",
+    databaseURL: "https://web-expense-tracker-1dbb4-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "web-expense-tracker-1dbb4",
+    storageBucket: "web-expense-tracker-1dbb4.firebasestorage.app",
+    messagingSenderId: "749226836398",
+    appId: "1:749226836398:web:7a5d5995ab85394fccc83f"
 };
 
 // 啟動 Firebase 引擎
@@ -16,10 +16,58 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-let currentUser = null; // 這個變數用來記住現在是誰登入了
+let currentUser = null; // 記錄目前的登入者
+let transactions = [];  // 雲端資料存放區
+
+let expenseChartInstance = null; 
+let incomeChartInstance = null;  
+
+// 設定今日預設日期
+document.getElementById('inputDate').valueAsDate = new Date();
 
 // ==========================================
-// 🔐 Google 登入與登出系統
+// 🌍 翻譯字典與狀態設定
+// ==========================================
+const translations = {
+    zh: {
+        appTitle: "💰 肥蟲記賬本🐛 💰", totalIncome: "總收入", totalExpense: "總支出", 
+        viewRange: "📅 查看範圍：", currentBalance: "目前結餘", addTransaction: "➕ 新增交易",
+        date: "日期", transactionType: "交易類型", expenseBtn: "支出💸", incomeBtn: "收入💰", 
+        category: "用途 / 分類", accountSource: "帳戶 / 來源", amount: "金額",
+        amountPlaceholder: "輸入金額 (HKD)", confirmAdd: "確認新增",
+        expenseAnalysis: "📈 支出分析", noExpenseData: "目前尚無支出資料可供分析 💸",
+        incomeAnalysis: "💰 收入來源分析", noIncomeData: "目前尚無收入資料可供分析 💰",
+        recentRecords: "📝 最近交易紀錄", clearAll: "🗑️ 清除所有紀錄",
+        feedbackBtn: "💡 給開發者留言回饋 (Feedback)",
+        expenseHighlight: "支出重點", incomeHighlight: "收入重點",
+        maxSource: "最大的來源是", totalAmt: "總共", detailRatio: "各項目詳細佔比",
+        alertInput: "請填寫正確的日期與金額！", alertDel: "確定要刪除這筆單一紀錄嗎？", alertClear: "確定要清除所有的記帳紀錄嗎？這個動作無法復原喔！",
+        remark: "備註 (選填)", remarkPlaceholder: "輸入備註細節...",
+        customBg: "自訂背景圖片：", clearBg: "清除背景", alertBgSize: "圖片檔案太大，無法儲存！請選擇小於 2MB 的圖片。",
+    },
+    en: {
+        appTitle: "💰 Web Expense Tracker🐛 💰", totalIncome: "Total Income", totalExpense: "Total Expense",
+        viewRange: "📅 View Range: ", currentBalance: "Current Balance", addTransaction: "➕ Add Transaction",
+        date: "Date", transactionType: "Transaction Type", expenseBtn: "Expense💸", incomeBtn: "Income💰", 
+        category: "Category", accountSource: "Account / Source", amount: "Amount",
+        amountPlaceholder: "Enter Amount (HKD)", confirmAdd: "Confirm Add",
+        expenseAnalysis: "📈 Expense Analysis", noExpenseData: "No expense data available for analysis 💸",
+        incomeAnalysis: "💰 Income Analysis", noIncomeData: "No income data available for analysis 💰",
+        recentRecords: "📝 Recent Records", clearAll: "🗑️ Clear All Records",
+        feedbackBtn: "💡 Give Feedback",
+        expenseHighlight: "Expense Focus", incomeHighlight: "Income Focus",
+        maxSource: "Top source is", totalAmt: "Total", detailRatio: "Detailed Ratio",
+        alertInput: "Please enter a valid date and amount!", alertDel: "Are you sure you want to delete this record?", alertClear: "Are you sure you want to clear ALL records? This cannot be undone!",
+        remark: "Remarks (Optional)", remarkPlaceholder: "Enter details...",
+        customBg: "Custom Background: ", clearBg: "Clear Background", alertBgSize: "Image file is too large to save! Please choose an image smaller than 2MB.",
+    }
+};
+
+let currentLang = 'zh'; 
+let isDarkMode = localStorage.getItem('darkMode') !== 'false';
+
+// ==========================================
+// 🔐 Google 登入系統與雲端連線
 // ==========================================
 function loginWithGoogle() {
     const provider = new firebase.auth.GoogleAuthProvider();
@@ -32,23 +80,20 @@ function logout() {
     auth.signOut();
 }
 
-// 監聽使用者的「登入/登出」狀態變化
+// 監聽登入狀態並自動抓取雲端資料
 auth.onAuthStateChanged((user) => {
     const userInfoDiv = document.getElementById('userInfo');
     if (user) {
-        // ✅ 已經登入成功
         currentUser = user;
         userInfoDiv.innerHTML = `
             <span style="margin-right: 15px;">👋 Hi, ${user.displayName}</span>
             <button onclick="logout()" class="theme-btn" style="background: #dc3545; color: white; border: none;">登出 (Logout)</button>
         `;
-        // 🚧 第三階段會在這裡加入：登入後去雲端抓取該使用者的資料
+        fetchTransactionsFromCloud(); // 登入後，立刻去雲端下載帳本！
     } else {
-        // ❌ 尚未登入，或已經登出
         currentUser = null;
-        transactions = []; // 登出時把畫面上的資料清空，保護隱私
-        updateDashboard(); // 重新渲染成空畫面
-
+        transactions = []; // 登出時清空畫面
+        updateDashboard();
         userInfoDiv.innerHTML = `
             <button onclick="loginWithGoogle()" class="theme-btn" style="background: #4285F4; color: white; border: none; box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3) !important;">
                 🔒 Google 登入 (Login)
@@ -56,170 +101,26 @@ auth.onAuthStateChanged((user) => {
         `;
     }
 });
-// ================== 以上是新加入的 Firebase 魔法 ==================
 
-// (原本的 const translations = { ... } 從這裡開始繼續)
-
-// 翻譯字典
-const translations = {
-    zh: {
-        appTitle: "💰 肥蟲記賬本🐛 💰", totalIncome: "總收入", totalExpense: "總支出", 
-        viewRange: "📅 查看範圍：", currentBalance: "目前結餘", addTransaction: "➕ 新增交易",
-        date: "日期", transactionType: "交易類型", expenseBtn: "支出💸", 
-        incomeBtn: "收入💰", 
-        category: "用途 / 分類", accountSource: "帳戶 / 來源", amount: "金額",
-        amountPlaceholder: "輸入金額 (HKD)", confirmAdd: "確認新增",
-        expenseAnalysis: "📈 支出分析", noExpenseData: "目前尚無支出資料可供分析 💸",
-        incomeAnalysis: "💰 收入來源分析", noIncomeData: "目前尚無收入資料可供分析 💰",
-        recentRecords: "📝 最近交易紀錄", clearAll: "🗑️ 清除所有紀錄",
-        feedbackBtn: "💡 給開發者留言回饋 (Feedback)",
-        expenseHighlight: "支出重點", incomeHighlight: "收入重點",
-        maxSource: "最大的來源是", totalAmt: "總共", detailRatio: "各項目詳細佔比",
-        alertInput: "請填寫正確的日期與金額！", alertDel: "確定要刪除這筆單一紀錄嗎？", alertClear: "確定要清除所有的記帳紀錄嗎？這個動作無法復原喔！",
-        remark: "備註 (選填)", remarkPlaceholder: "輸入備註細節...",
-        customBg: "自訂背景圖片：", clearBg: "清除背景", alertBgSize: "圖片檔案太大，無法儲存！請選擇小於 2MB 的圖片。",
-
-    },
-    en: {
-        appTitle: "💰 Web Expense Tracker🐛 💰", totalIncome: "Total Income", totalExpense: "Total Expense",
-        viewRange: "📅 View Range: ", currentBalance: "Current Balance", addTransaction: "➕ Add Transaction",
-        date: "Date", transactionType: "Transaction Type", expenseBtn: "Expense💸", 
-        incomeBtn: "Income💰", 
-        category: "Category", accountSource: "Account / Source", amount: "Amount",
-        amountPlaceholder: "Enter Amount (HKD)", confirmAdd: "Confirm Add",
-        expenseAnalysis: "📈 Expense Analysis", noExpenseData: "No expense data available for analysis 💸",
-        incomeAnalysis: "💰 Income Analysis", noIncomeData: "No income data available for analysis 💰",
-        recentRecords: "📝 Recent Records", clearAll: "🗑️ Clear All Records",
-        feedbackBtn: "💡 Give Feedback",
-        expenseHighlight: "Expense Focus", incomeHighlight: "Income Focus",
-        maxSource: "Top source is", totalAmt: "Total", detailRatio: "Detailed Ratio",
-        alertInput: "Please enter a valid date and amount!", alertDel: "Are you sure you want to delete this record?", alertClear: "Are you sure you want to clear ALL records? This cannot be undone!",
-        remark: "Remarks (Optional)", remarkPlaceholder: "Enter details...",
-        customBg: "Custom Background: ", clearBg: "Clear Background", alertBgSize: "Image file is too large to save! Please choose an image smaller than 2MB.",
-
-    }
-};
-
-let currentLang = 'zh'; 
-let isDarkMode = localStorage.getItem('darkMode') === 'true';
-
-// 啟動 LocalStorage
-//let transactions = JSON.parse(localStorage.getItem('myExpenses')) || [];
-
-// 雲端記憶宣告與讀取
-let transactions = []; // 一開始先清空，等登入後再去雲端抓
-
-// 這是一個向雲端索取資料的專屬 Function
+// 下載雲端資料
 async function fetchTransactionsFromCloud() {
-    if (!currentUser) return; // 沒登入就不能抓資料
-    
+    if (!currentUser) return;
     try {
-        // 去雲端找「這個人(uid)」專屬的「transactions」資料夾
         const snapshot = await db.collection('users').doc(currentUser.uid).collection('transactions').get();
-        
-        // 把抓下來的資料轉換成我們熟悉的陣列格式
         transactions = snapshot.docs.map(doc => {
             const data = doc.data();
-            data.id = doc.id; // Firebase 會自動產生亂碼 ID，我們把它記下來
+            data.id = doc.id; 
             return data;
         });
-        
-        updateDashboard(); // 資料抓完，更新畫面！
+        updateDashboard();
     } catch (error) {
         console.error("讀取資料失敗：", error);
     }
 }
 
-let expenseChartInstance = null; 
-let incomeChartInstance = null;
-
-// 1. 一鍵切換語言的魔法
-function toggleLanguage() {
-    currentLang = currentLang === 'zh' ? 'en' : 'zh';
-    
-    document.querySelectorAll('[data-i18n]').forEach(el => {
-        const key = el.getAttribute('data-i18n');
-        if (translations[currentLang][key]) {
-            el.innerText = translations[currentLang][key];
-        }
-    });
-
-    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-        const key = el.getAttribute('data-i18n-placeholder');
-        if (translations[currentLang][key]) {
-            el.placeholder = translations[currentLang][key];
-        }
-    });
-    
-    updateDashboard(); 
-    applyTheme(); 
-}  
-
-// 設定今日預設日期
-document.getElementById('inputDate').valueAsDate = new Date();
-
-// 2. 交易類型按鈕切換邏輯 (✨ 加入了選單自動連動顯示/隱藏的魔法)
-function setTransactionType(type) {
-    document.getElementById('inputType').value = type; 
-    
-    const btnExp = document.getElementById('btnExpense');
-    const btnInc = document.getElementById('btnIncome');
-    
-    // 抓取 HTML 裡的分類群組
-    const optExp = document.getElementById('optExpense');
-    const optInc = document.getElementById('optIncome');
-    
-    if (type === 'expense') {
-        btnExp.classList.add('active');
-        btnInc.classList.remove('active');
-        // 顯示支出選項，隱藏收入選項
-        if(optExp) optExp.style.display = 'block';
-        if(optInc) optInc.style.display = 'none';
-        document.getElementById('inputCategory').value = 'Meal'; // 自動切回預設支出
-    } else {
-        btnInc.classList.add('active');
-        btnExp.classList.remove('active');
-        // 顯示收入選項，隱藏支出選項
-        if(optExp) optExp.style.display = 'none';
-        if(optInc) optInc.style.display = 'block';
-        document.getElementById('inputCategory').value = 'Income'; // 自動切回預設收入
-    }
-}
-
-// // 3. 交易的主要 Function
-// function addTransaction() {
-//     const date = document.getElementById('inputDate').value;
-//     const type = document.getElementById('inputType').value;
-//     const account = document.getElementById('inputAccount').value;
-//     const category = document.getElementById('inputCategory').value;
-//     const amount = Math.round(parseFloat(document.getElementById('inputAmount').value) * 100) / 100;
-//     const remark = document.getElementById('inputRemark').value;
-
-//     if (!date || isNaN(amount) || amount <= 0) {
-//         alert(translations[currentLang].alertInput);
-//         return;
-//     }
-
-//     const transaction = {
-//         id: Date.now(),
-//         date: date,
-//         type: type, // 現在只有 'expense' 或 'income'
-//         account: account,
-//         category: category,
-//         amount: amount,
-//         remark: remark,
-//     };
-
-//     transactions.push(transaction);
-//     localStorage.setItem('myExpenses', JSON.stringify(transactions));
-
-//     document.getElementById('inputAmount').value = '';
-//     document.getElementById('inputRemark').value = '';
-
-//     updateDashboard();
-// }
-
-// 3. 雲端版：新增交易
+// ==========================================
+// 🚀 核心功能：新增、刪除、清空 (雲端版)
+// ==========================================
 async function addTransaction() {
     if (!currentUser) {
         alert("請先登入 Google 帳號才能記帳喔！");
@@ -238,14 +139,15 @@ async function addTransaction() {
         return;
     }
 
-    // 準備好要上傳的資料包 (不需要自己寫 id 了，Firebase 會給)
     const transactionData = { date, type, account, category, amount, remark };
 
+    // 先讓按鈕變成「處理中...」，避免重複點擊
+    const btn = document.querySelector('button[onclick="addTransaction()"]');
+    btn.innerText = "⏳ 雲端同步中...";
+    btn.disabled = true;
+
     try {
-        // 上傳到雲端！
         const docRef = await db.collection('users').doc(currentUser.uid).collection('transactions').add(transactionData);
-        
-        // 上傳成功後，把雲端給的 ID 塞進去，並加到畫面陣列裡
         transactionData.id = docRef.id;
         transactions.push(transactionData);
 
@@ -254,10 +156,45 @@ async function addTransaction() {
         updateDashboard();
     } catch (error) {
         alert("新增失敗：" + error.message);
+    } finally {
+        btn.innerText = translations[currentLang].confirmAdd;
+        btn.disabled = false;
     }
 }
 
-// 4. 更新畫面的 Function 
+async function deleteTransaction(id) {
+    if (!currentUser) return;
+    if (confirm(translations[currentLang].alertDel)) {
+        try {
+            await db.collection('users').doc(currentUser.uid).collection('transactions').doc(id).delete();
+            transactions = transactions.filter(t => t.id !== id);
+            updateDashboard();
+        } catch(error) {
+            alert("刪除失敗：" + error.message);
+        }
+    }
+}
+
+async function clearAllData() {
+    if (!currentUser) return;
+    if (confirm(translations[currentLang].alertClear)) {
+        try {
+            const snapshot = await db.collection('users').doc(currentUser.uid).collection('transactions').get();
+            const batch = db.batch();
+            snapshot.docs.forEach(doc => batch.delete(doc.ref));
+            await batch.commit(); 
+            
+            transactions = [];
+            updateDashboard();
+        } catch(error) {
+            alert("清除失敗：" + error.message);
+        }
+    }
+}
+
+// ==========================================
+// 🎨 UI 渲染與畫面更新
+// ==========================================
 function updateDashboard() {
     let totalIncome = 0;
     let totalExpense = 0;
@@ -266,63 +203,47 @@ function updateDashboard() {
 
     const expenseData = {};
     const incomeData = {}; 
-
     const filterVal = document.getElementById('filterTime').value;
     const today = new Date(); 
 
     let filteredTransactions = transactions.filter(t => {
         if (filterVal === 'all') return true; 
-
         const tDate = new Date(t.date); 
-
         if (filterVal === 'month') {
             return tDate.getMonth() === today.getMonth() && tDate.getFullYear() === today.getFullYear();
         }
-        
         if (filterVal === 'week') {
             const diffTime = today - tDate;
             const diffDays = diffTime / (1000 * 60 * 60 * 24);
             return diffDays >= 0 && diffDays <= 7;
         }
-
         if (filterVal === 'custom') {
             const startVal = document.getElementById('customStartDate').value;
             const endVal = document.getElementById('customEndDate').value;
             if (!startVal || !endVal) return true; 
-
-            const startDate = new Date(startVal);
-            startDate.setHours(0, 0, 0, 0); 
-            const endDate = new Date(endVal);
-            endDate.setHours(23, 59, 59, 999); 
+            const startDate = new Date(startVal); startDate.setHours(0, 0, 0, 0); 
+            const endDate = new Date(endVal); endDate.setHours(23, 59, 59, 999); 
             return tDate >= startDate && tDate <= endDate;
         }
     });
 
+    // 依照日期新舊排序
+    filteredTransactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+
     filteredTransactions.forEach(t => {
         if (t.type === 'income') {
             totalIncome += t.amount;
-            // 收入圖表：根據「帳戶/來源」來分類 (例如：Salary, Mum)
-            if (incomeData[t.account]) {
-                incomeData[t.account] += t.amount;
-            } else {
-                incomeData[t.account] = t.amount;
-            }
-            
+            incomeData[t.account] = (incomeData[t.account] || 0) + t.amount;
         } else if (t.type === 'expense') {
             totalExpense += t.amount;
-            // 支出圖表：根據「用途/分類」來分類 (例如：Breakfast, Shopping)
-            if (expenseData[t.category]) {
-                expenseData[t.category] += t.amount;
-            } else {
-                expenseData[t.category] = t.amount;
-            }
+            expenseData[t.category] = (expenseData[t.category] || 0) + t.amount;
         }
 
         const li = document.createElement('li');
         li.className = (t.type === 'income') ? 'li-income' : 'li-expense';
-        
         const remarkText = t.remark ? `<br><small style="color: #6c757d; margin-top: 4px; display: inline-block;">📝 ${t.remark}</small>` : '';
 
+        // ⚠️ 這裡的 t.id 已經用單引號包起來，修復了刪除按鈕的問題
         li.innerHTML = `
             <span>
                 <strong>${formatDate(t.date)}</strong> | ${t.account} -> ${t.category}
@@ -331,7 +252,7 @@ function updateDashboard() {
                 $${formatMoney(t.amount)} <button class="delete-btn" onclick="deleteTransaction('${t.id}')">❌</button>
             </span>
         `;
-        listEl.prepend(li); 
+        listEl.appendChild(li); 
     });
 
     document.getElementById('totalIncome').innerText = formatMoney(totalIncome);
@@ -343,146 +264,83 @@ function updateDashboard() {
 
     generateAnalysis(expenseData, totalExpense, 'analysisReport', translations[currentLang].expenseHighlight, '#dc3545', translations[currentLang].noExpenseData);
     generateAnalysis(incomeData, totalIncome, 'incomeReport', translations[currentLang].incomeHighlight, '#28a745', translations[currentLang].noIncomeData);
+
+    // 🌉 本機同步橋樑：把雲端資料複製一份給 details.html 用！
+    localStorage.setItem('myExpenses', JSON.stringify(transactions));
 }
 
-// 5. 繪製圖表的通用 Function 
 function drawChart(canvasId, dataObj, chartInstance) {
     const ctx = document.getElementById(canvasId).getContext('2d');
     if (chartInstance) { chartInstance.destroy(); }
-
-    const labels = Object.keys(dataObj);
-    const dataValues = Object.values(dataObj);
-
     return new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: labels,
+            labels: Object.keys(dataObj),
             datasets: [{
-                data: dataValues,
-                backgroundColor: [
-                    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
-                    '#FF9F40', '#E7E9ED', '#8AC926', '#1982C4', '#F15BB5',
-                    '#00F5D4', '#9B5DE5', '#FEE440'
-                ]
+                data: Object.values(dataObj),
+                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#E7E9ED', '#8AC926', '#1982C4', '#F15BB5', '#00F5D4', '#9B5DE5', '#FEE440']
             }]
         },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
     });
 }
 
-// 6. 產生分析報告
 function generateAnalysis(dataObj, totalAmt, targetId, highlightName, colorHex, emptyMsg) {
     const reportEl = document.getElementById(targetId);
     if (totalAmt === 0 || Object.keys(dataObj).length === 0) {
         reportEl.innerHTML = emptyMsg; 
         return;
     }
-
-    let maxCategory = '';
-    let maxAmount = 0;
-    let detailsHTML = "<ul style='padding-left: 20px; margin-top: 10px;'>";
-
+    let maxCategory = '', maxAmount = 0, detailsHTML = "<ul style='padding-left: 20px; margin-top: 10px;'>";
     for (const category in dataObj) {
         const amount = parseFloat(dataObj[category].toFixed(2));
         const percentage = Math.round((amount / totalAmt) * 100);
-        detailsHTML += `<li style="margin-bottom: 5px; border-left: none; padding: 0; box-shadow: none; background: none;">
-                            <strong>${category}</strong>: $${amount} (${percentage}%)
-                        </li>`;
-        if (amount > maxAmount) {
-            maxAmount = amount;
-            maxCategory = category;
-        }
+        detailsHTML += `<li style="margin-bottom: 5px; border-left: none; padding: 0; box-shadow: none; background: none;"><strong>${category}</strong>: $${formatMoney(amount)} (${percentage}%)</li>`;
+        if (amount > maxAmount) { maxAmount = amount; maxCategory = category; }
     }
-
-    const amount = dataObj[category];
-    const percentage = Math.round((amount / totalAmt) * 100);
-    detailsHTML += `<li style="margin-bottom: 5px; border-left: none; padding: 0; box-shadow: none; background: none;">
-                        <strong>${category}</strong>: $${formatMoney(amount)} (${percentage}%)
-                    </li>`;
-
-    const textMaxSource = translations[currentLang].maxSource;
-    const textTotalAmt = translations[currentLang].totalAmt;
-    const textDetailRatio = translations[currentLang].detailRatio;
-
     reportEl.innerHTML = `
-        <div style="font-size: 16px; margin-bottom: 10px;">
-            💡 <strong>${highlightName}：</strong> ${textMaxSource}「<span style="color: ${colorHex}; font-weight: bold;">${maxCategory}</span>」，${textTotalAmt} <strong>$${formatMoney(maxAmount)}</strong>！
-        </div>
-        <div><strong>📊 ${textDetailRatio}：</strong></div>
-        ${detailsHTML}
+        <div style="font-size: 16px; margin-bottom: 10px;">💡 <strong>${highlightName}：</strong> ${translations[currentLang].maxSource}「<span style="color: ${colorHex}; font-weight: bold;">${maxCategory}</span>」，${translations[currentLang].totalAmt} <strong>$${formatMoney(maxAmount)}</strong>！</div>
+        <div><strong>📊 ${translations[currentLang].detailRatio}：</strong></div>${detailsHTML}
     `;
 }
 
-// // 7. 單筆刪除
-// function deleteTransaction(id) {
-//     if (confirm(translations[currentLang].alertDel)) {
-//         transactions = transactions.filter(t => t.id !== id);
-//         localStorage.setItem('myExpenses', JSON.stringify(transactions));
-//         updateDashboard();
-//     }
-// }
-
-// 7. 雲端版：單筆刪除
-async function deleteTransaction(id) {
-    if (!currentUser) return;
-    
-    if (confirm(translations[currentLang].alertDel)) {
-        try {
-            // 告訴雲端：刪除這個 ID 的文件
-            await db.collection('users').doc(currentUser.uid).collection('transactions').doc(id).delete();
-            
-            // 雲端刪除成功後，再把畫面上的也過濾掉
-            transactions = transactions.filter(t => t.id !== id);
-            updateDashboard();
-        } catch(error) {
-            alert("刪除失敗：" + error.message);
-        }
-    }
+// ==========================================
+// ⚙️ 其他輔助與切換工具
+// ==========================================
+function toggleLanguage() {
+    currentLang = currentLang === 'zh' ? 'en' : 'zh';
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (translations[currentLang][key]) el.innerText = translations[currentLang][key];
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        if (translations[currentLang][key]) el.placeholder = translations[currentLang][key];
+    });
+    updateDashboard(); 
+    applyTheme(); 
 }
 
-// // 8. 清除所有
-// function clearAllData() {
-//     if (confirm(translations[currentLang].alertClear)) {
-//         localStorage.removeItem('myExpenses');
-//         transactions = [];
-//         updateDashboard();
-//     }
-// }
-
-// 8. 雲端版：清除所有
-async function clearAllData() {
-    if (!currentUser) return;
-
-    if (confirm(translations[currentLang].alertClear)) {
-        try {
-            // Firebase 不支援「一鍵刪除整個資料夾」，我們必須把檔案包成一包 (batch) 批次刪除
-            const snapshot = await db.collection('users').doc(currentUser.uid).collection('transactions').get();
-            const batch = db.batch();
-            snapshot.docs.forEach(doc => batch.delete(doc.ref));
-            
-            await batch.commit(); // 執行批次刪除
-            
-            transactions = [];
-            updateDashboard();
-        } catch(error) {
-            alert("清除失敗：" + error.message);
-        }
-    }
-}
-
-// 9. 自訂日期顯示
-function handleFilterChange() {
-    const filterVal = document.getElementById('filterTime').value;
-    const customArea = document.getElementById('customDateArea');
-    if (filterVal === 'custom') {
-        customArea.style.display = 'block'; 
+function setTransactionType(type) {
+    document.getElementById('inputType').value = type; 
+    const btnExp = document.getElementById('btnExpense'), btnInc = document.getElementById('btnIncome');
+    const optExp = document.getElementById('optExpense'), optInc = document.getElementById('optIncome');
+    if (type === 'expense') {
+        btnExp.classList.add('active'); btnInc.classList.remove('active');
+        if(optExp) optExp.style.display = 'block'; if(optInc) optInc.style.display = 'none';
+        document.getElementById('inputCategory').value = 'Meal';
     } else {
-        customArea.style.display = 'none';  
+        btnInc.classList.add('active'); btnExp.classList.remove('active');
+        if(optExp) optExp.style.display = 'none'; if(optInc) optInc.style.display = 'block';
+        document.getElementById('inputCategory').value = 'Income'; 
     }
+}
+
+function handleFilterChange() {
+    document.getElementById('customDateArea').style.display = (document.getElementById('filterTime').value === 'custom') ? 'block' : 'none';
     updateDashboard(); 
 }
 
-// 10. 應用主題
 function applyTheme() {
     const themeBtn = document.getElementById('themeBtn');
     if (isDarkMode) {
@@ -494,14 +352,12 @@ function applyTheme() {
     }
 }
 
-// 11. 切換主題
 function toggleTheme() {
     isDarkMode = !isDarkMode; 
     localStorage.setItem('darkMode', isDarkMode); 
     applyTheme();
 }
 
-// 12. 讀取並應用儲存的背景圖片
 function applyBackground() {
     const savedBg = localStorage.getItem('myBgImage');
     if (savedBg) {
@@ -514,54 +370,38 @@ function applyBackground() {
     }
 }
 
-// 13. 處理使用者上傳圖片
 function changeBackground(event) {
     const file = event.target.files[0];
     if (file) {
-        const reader = new FileReader(); // 召喚可以讀取檔案的魔法
+        const reader = new FileReader();
         reader.onload = function(e) {
-            const base64Data = e.target.result; // 將圖片轉成超長字串
             try {
-                // 嘗試存入大腦 (LocalStorage)
-                localStorage.setItem('myBgImage', base64Data);
-                applyBackground(); // 立刻套用背景
+                localStorage.setItem('myBgImage', e.target.result);
+                applyBackground(); 
             } catch (err) {
-                // ⚠️ 防呆機制：LocalStorage 最大只能存 5MB
                 alert(translations[currentLang].alertBgSize);
-                document.getElementById('bgInput').value = ''; // 清空輸入框
+                document.getElementById('bgInput').value = ''; 
             }
         };
-        reader.readAsDataURL(file); // 開始讀取檔案
+        reader.readAsDataURL(file); 
     }
 }
 
-// 14. 清除背景
 function clearBackground() {
-    localStorage.removeItem('myBgImage'); // 從大腦刪除
-    document.getElementById('bgInput').value = ''; // 清空輸入框
-    applyBackground(); // 重新套用（這時會變回原本的單色背景）
+    localStorage.removeItem('myBgImage'); 
+    document.getElementById('bgInput').value = ''; 
+    applyBackground(); 
 }
 
-// 15. 金錢格式化小工具 (自動加上千位逗號，並處理好小數點)
-function formatMoney(num) {
-    return parseFloat(num.toFixed(2)).toLocaleString('en-US');
-}
+function formatMoney(num) { return parseFloat(num.toFixed(2)).toLocaleString('en-US'); }
 
-// 16. 英式日期轉換小工具 (把 YYYY-MM-DD 變成 DD/MM/YYYY)
 function formatDate(dateString) {
     if (!dateString) return '';
-    const parts = dateString.split('-'); // 把日期用「-」切開
-    if (parts.length === 3) {
-        return `${parts[2]}/${parts[1]}/${parts[0]}`; // 重新排列成 日/月/年
-    }
-    return dateString;
+    const parts = dateString.split('-'); 
+    return (parts.length === 3) ? `${parts[2]}/${parts[1]}/${parts[0]}` : dateString;
 }
 
-// 網頁一打開時，記得呼叫套用背景
+// 初始化
 applyBackground();
-
-// 初始化啟動區
 applyTheme();
-setTransactionType('expense'); // 網頁打開時，確保選單預設狀態是支出
-updateDashboard();
-
+setTransactionType('expense');
