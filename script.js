@@ -1,3 +1,62 @@
+// ==========================================
+// 🔥 Firebase 雲端基地初始化
+// ==========================================
+const firebaseConfig = {
+  apiKey: "AIzaSyDfczo3Rkwe0OXijJUynLMM1Fb9c1FctSI",
+  authDomain: "web-expense-tracker-1dbb4.firebaseapp.com",
+  databaseURL: "https://web-expense-tracker-1dbb4-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "web-expense-tracker-1dbb4",
+  storageBucket: "web-expense-tracker-1dbb4.firebasestorage.app",
+  messagingSenderId: "749226836398",
+  appId: "1:749226836398:web:7a5d5995ab85394fccc83f"
+};
+
+// 啟動 Firebase 引擎
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+let currentUser = null; // 這個變數用來記住現在是誰登入了
+
+// ==========================================
+// 🔐 Google 登入與登出系統
+// ==========================================
+function loginWithGoogle() {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider).catch((error) => {
+        alert("登入失敗：" + error.message);
+    });
+}
+
+function logout() {
+    auth.signOut();
+}
+
+// 監聽使用者的「登入/登出」狀態變化
+auth.onAuthStateChanged((user) => {
+    const userInfoDiv = document.getElementById('userInfo');
+    if (user) {
+        // ✅ 已經登入成功
+        currentUser = user;
+        userInfoDiv.innerHTML = `
+            <span style="margin-right: 15px;">👋 Hi, ${user.displayName}</span>
+            <button onclick="logout()" class="theme-btn" style="background: #dc3545; color: white; border: none;">登出 (Logout)</button>
+        `;
+        // 🚧 第三階段會在這裡加入：登入後去雲端抓取該使用者的資料
+    } else {
+        // ❌ 尚未登入，或已經登出
+        currentUser = null;
+        userInfoDiv.innerHTML = `
+            <button onclick="loginWithGoogle()" class="theme-btn" style="background: #4285F4; color: white; border: none; box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3) !important;">
+                🔒 Google 登入 (Login)
+            </button>
+        `;
+    }
+});
+// ================== 以上是新加入的 Firebase 魔法 ==================
+
+// (原本的 const translations = { ... } 從這裡開始繼續)
+
 // 翻譯字典
 const translations = {
     zh: {
@@ -39,7 +98,7 @@ const translations = {
 };
 
 let currentLang = 'zh'; 
-let isDarkMode = localStorage.getItem('darkMode') === 'false';
+let isDarkMode = localStorage.getItem('darkMode') === 'true';
 
 // 1. 一鍵切換語言的魔法
 function toggleLanguage() {
