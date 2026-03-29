@@ -72,7 +72,10 @@ function loginWithGoogle() {
     const provider = new firebase.auth.GoogleAuthProvider();
     auth.signInWithPopup(provider).catch((error) => alert("登入失敗：" + error.message));
 }
-function logout() { auth.signOut(); }
+
+function logout() { 
+    auth.signOut(); 
+}
 
 auth.onAuthStateChanged((user) => {
     const userInfoDiv = document.getElementById('userInfo');
@@ -84,7 +87,9 @@ auth.onAuthStateChanged((user) => {
         `;
         fetchTransactionsFromCloud(); 
     } else {
-        currentUser = null; transactions = []; updateDashboard();
+        currentUser = null; 
+        transactions = []; 
+        updateDashboard();
         userInfoDiv.innerHTML = `
             <button onclick="loginWithGoogle()" class="theme-btn" style="background: #4285F4; color: white; border: none; box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3) !important;">
                 🔒 Google 登入 (Login)
@@ -97,16 +102,25 @@ async function fetchTransactionsFromCloud() {
     if (!currentUser) return;
     try {
         const snapshot = await db.collection('users').doc(currentUser.uid).collection('transactions').get();
-        transactions = snapshot.docs.map(doc => { const data = doc.data(); data.id = doc.id; return data; });
+        transactions = snapshot.docs.map(doc => { 
+            const data = doc.data(); 
+            data.id = doc.id; 
+            return data; 
+        });
         updateDashboard();
-    } catch (error) { console.error("讀取資料失敗：", error); }
+    } catch (error) { 
+        console.error("讀取資料失敗：", error); 
+    }
 }
 
 // ==========================================
 // 🚀 核心功能：新增/修改、刪除、清空 (雲端版)
 // ==========================================
 async function addTransaction() {
-    if (!currentUser) { alert("請先登入 Google 帳號才能記帳喔！"); return; }
+    if (!currentUser) { 
+        alert("請先登入 Google 帳號才能記帳喔！"); 
+        return; 
+    }
 
     const date = document.getElementById('inputDate').value;
     const type = document.getElementById('inputType').value;
@@ -115,11 +129,15 @@ async function addTransaction() {
     const amount = Math.round(parseFloat(document.getElementById('inputAmount').value) * 100) / 100;
     const remark = document.getElementById('inputRemark').value;
 
-    if (!date || isNaN(amount) || amount <= 0) { alert(translations[currentLang].alertInput); return; }
+    if (!date || isNaN(amount) || amount <= 0) { 
+        alert(translations[currentLang].alertInput); 
+        return; 
+    }
 
     const transactionData = { date, type, account, category, amount, remark };
     const btn = document.querySelector('button[onclick="addTransaction()"]');
-    btn.innerText = "⏳ 雲端同步中..."; btn.disabled = true;
+    btn.innerText = "⏳ 雲端同步中..."; 
+    btn.disabled = true;
 
     try {
         if (editingId) {
@@ -138,8 +156,9 @@ async function addTransaction() {
         document.getElementById('inputAmount').value = '';
         document.getElementById('inputRemark').value = '';
         updateDashboard();
-    } catch (error) { alert("操作失敗：" + error.message); } 
-    finally {
+    } catch (error) { 
+        alert("操作失敗：" + error.message); 
+    } finally {
         btn.innerText = translations[currentLang].confirmAdd;
         btn.disabled = false;
     }
@@ -152,7 +171,9 @@ async function deleteTransaction(id) {
             await db.collection('users').doc(currentUser.uid).collection('transactions').doc(id).delete();
             transactions = transactions.filter(t => t.id !== id);
             updateDashboard();
-        } catch(error) { alert("刪除失敗：" + error.message); }
+        } catch(error) { 
+            alert("刪除失敗：" + error.message); 
+        }
     }
 }
 
@@ -164,8 +185,11 @@ async function clearAllData() {
             const batch = db.batch();
             snapshot.docs.forEach(doc => batch.delete(doc.ref));
             await batch.commit(); 
-            transactions = []; updateDashboard();
-        } catch(error) { alert("清除失敗：" + error.message); }
+            transactions = []; 
+            updateDashboard();
+        } catch(error) { 
+            alert("清除失敗：" + error.message); 
+        }
     }
 }
 
@@ -193,7 +217,8 @@ function editTransaction(id) {
     editingId = id; 
     const btn = document.querySelector('button[onclick="addTransaction()"]');
     btn.innerHTML = translations[currentLang].confirmEdit;
-    btn.style.background = "#ffc107"; btn.style.color = "#000"; // 變成醒目的黃色
+    btn.style.background = "#ffc107"; 
+    btn.style.color = "#000"; // 變成醒目的黃色
     window.scrollTo({ top: 0, behavior: 'smooth' }); 
 }
 
@@ -201,11 +226,14 @@ function editTransaction(id) {
 // 🎨 UI 渲染與畫面更新
 // ==========================================
 function updateDashboard() {
-    let totalIncome = 0; let totalExpense = 0;
-    const listEl = document.getElementById('transactionList'); listEl.innerHTML = ''; 
+    let totalIncome = 0; 
+    let totalExpense = 0;
+    const listEl = document.getElementById('transactionList'); 
+    listEl.innerHTML = ''; 
 
-    const expenseData = {}; const incomeData = {}; 
-    let accountTotals = {}; // 👈 紀錄各帳戶結餘
+    const expenseData = {}; 
+    const incomeData = {}; 
+    let accountTotals = {}; // 紀錄各帳戶結餘
 
     const filterVal = document.getElementById('filterTime').value;
     const today = new Date(); 
@@ -214,21 +242,24 @@ function updateDashboard() {
         if (filterVal === 'all') return true; 
         const tDate = new Date(t.date); 
         if (filterVal === 'today') {
-            return tDate.toDateString() === today.toDateString(); // 👈 本日篩選邏輯
+            return tDate.toDateString() === today.toDateString(); 
         }
         if (filterVal === 'month') {
             return tDate.getMonth() === today.getMonth() && tDate.getFullYear() === today.getFullYear();
         }
         if (filterVal === 'week') {
-            const diffTime = today - tDate; const diffDays = diffTime / (1000 * 60 * 60 * 24);
+            const diffTime = today - tDate; 
+            const diffDays = diffTime / (1000 * 60 * 60 * 24);
             return diffDays >= 0 && diffDays <= 7;
         }
         if (filterVal === 'custom') {
             const startVal = document.getElementById('customStartDate').value;
             const endVal = document.getElementById('customEndDate').value;
             if (!startVal || !endVal) return true; 
-            const startDate = new Date(startVal); startDate.setHours(0, 0, 0, 0); 
-            const endDate = new Date(endVal); endDate.setHours(23, 59, 59, 999); 
+            const startDate = new Date(startVal); 
+            startDate.setHours(0, 0, 0, 0); 
+            const endDate = new Date(endVal); 
+            endDate.setHours(23, 59, 59, 999); 
             return tDate >= startDate && tDate <= endDate;
         }
     });
@@ -237,12 +268,14 @@ function updateDashboard() {
 
     filteredTransactions.forEach(t => {
         if (t.type === 'income') {
-            totalIncome += t.amount; incomeData[t.account] = (incomeData[t.account] || 0) + t.amount;
+            totalIncome += t.amount; 
+            incomeData[t.account] = (incomeData[t.account] || 0) + t.amount;
         } else if (t.type === 'expense') {
-            totalExpense += t.amount; expenseData[t.category] = (expenseData[t.category] || 0) + t.amount;
+            totalExpense += t.amount; 
+            expenseData[t.category] = (expenseData[t.category] || 0) + t.amount;
         }
 
-        // 👈 計算各帳戶餘額
+        // 計算各帳戶餘額
         if (!accountTotals[t.account]) accountTotals[t.account] = 0;
         accountTotals[t.account] += (t.type === 'income' ? t.amount : -t.amount);
 
@@ -250,9 +283,12 @@ function updateDashboard() {
         li.className = (t.type === 'income') ? 'li-income' : 'li-expense';
         const remarkText = t.remark ? `<br><small style="color: #6c757d; margin-top: 4px; display: inline-block;">📝 ${t.remark}</small>` : '';
 
-        // 👈 加入修改按鈕 (✏️)
+        // 加入修改按鈕 (✏️)
         li.innerHTML = `
-            <span><strong>${formatDate(t.date)}</strong> | ${t.account} -> ${t.category} ${remarkText}</span>
+            <span>
+                <strong>${formatDate(t.date)}</strong> | ${t.account} -> ${t.category} 
+                ${remarkText}
+            </span>
             <span>
                 $${formatMoney(t.amount)} 
                 <button class="theme-btn" style="padding: 2px 8px; font-size: 14px; background: #ffc107; color: #000; border: none; min-width: auto; margin-left: 10px;" onclick="editTransaction('${t.id}')">✏️</button>
@@ -266,7 +302,7 @@ function updateDashboard() {
     document.getElementById('totalExpense').innerText = formatMoney(totalExpense);
     document.getElementById('totalBalance').innerText = formatMoney(totalIncome - totalExpense);
 
-    // 👈 渲染各帳戶結餘到畫面上
+    // 渲染各帳戶結餘到畫面上
     const accBalDiv = document.getElementById('accountBalances');
     if (accBalDiv) {
         accBalDiv.innerHTML = Object.keys(accountTotals)
@@ -297,59 +333,167 @@ function drawChart(canvasId, dataObj, chartInstance) {
             datasets: [{
                 data: Object.values(dataObj),
                 backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#E7E9ED', '#8AC926', '#1982C4', '#F15BB5', '#00F5D4', '#9B5DE5', '#FEE440'],
-                borderColor: borderColor, borderWidth: 2
+                borderColor: borderColor, 
+                borderWidth: 2
             }]
         },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: textColor } } } }
+        options: { 
+            responsive: true, 
+            maintainAspectRatio: false, 
+            plugins: { 
+                legend: { 
+                    position: 'right', 
+                    labels: { color: textColor } 
+                } 
+            } 
+        }
     });
 }
 
 function generateAnalysis(dataObj, totalAmt, targetId, highlightName, colorHex, emptyMsg) {
     const reportEl = document.getElementById(targetId);
-    if (totalAmt === 0 || Object.keys(dataObj).length === 0) { reportEl.innerHTML = emptyMsg; return; }
+    if (totalAmt === 0 || Object.keys(dataObj).length === 0) { 
+        reportEl.innerHTML = emptyMsg; 
+        return; 
+    }
+    
     let maxCategory = '', maxAmount = 0, detailsHTML = "<ul style='padding-left: 20px; margin-top: 10px;'>";
     for (const category in dataObj) {
         const amount = parseFloat(dataObj[category].toFixed(2));
         const percentage = Math.round((amount / totalAmt) * 100);
         detailsHTML += `<li style="margin-bottom: 5px; border-left: none; padding: 0; box-shadow: none; background: none;"><strong>${category}</strong>: $${formatMoney(amount)} (${percentage}%)</li>`;
-        if (amount > maxAmount) { maxAmount = amount; maxCategory = category; }
+        if (amount > maxAmount) { 
+            maxAmount = amount; 
+            maxCategory = category; 
+        }
     }
     reportEl.innerHTML = `<div style="font-size: 16px; margin-bottom: 10px;">💡 <strong>${highlightName}：</strong> ${translations[currentLang].maxSource}「<span style="color: ${colorHex}; font-weight: bold;">${maxCategory}</span>」，${translations[currentLang].totalAmt} <strong>$${formatMoney(maxAmount)}</strong>！</div><div><strong>📊 ${translations[currentLang].detailRatio}：</strong></div>${detailsHTML}`;
 }
 
 // ==========================================
-// ⚙️ 其他輔助與自訂選項工具
+// ⚙️ 選項狀態管理系統 (支援排序、修改、刪除)
 // ==========================================
-function handleCustomOption(selectEl, storageKey) {
-    if (selectEl.value === 'custom') {
-        const newVal = prompt(currentLang === 'zh' ? "請輸入新選項名稱：" : "Enter custom option name:");
-        if (newVal && newVal.trim() !== '') {
-            const cleanVal = newVal.trim();
-            const opt = document.createElement('option');
-            opt.value = cleanVal; opt.text = cleanVal;
-            selectEl.insertBefore(opt, selectEl.options[selectEl.options.length - 1]);
-            selectEl.value = cleanVal;
-            
-            let saved = JSON.parse(localStorage.getItem(storageKey)) || [];
-            if (!saved.includes(cleanVal)) {
-                saved.push(cleanVal);
-                localStorage.setItem(storageKey, JSON.stringify(saved));
-            }
-        } else { selectEl.selectedIndex = 0; }
+
+// 預設資料庫 (當使用者第一次打開，或清空時的預設值)
+const defaultOptions = {
+    expense: ["餐飲 (Food & Dining) 🍽️", "交通 (Transportation) 🚇", "購物 (Shopping) 🛍️", "娛樂 (Entertainment) 🎬", "其他支出 (Other Expense) 📝"],
+    income: ["薪水 (Salary) 💼", "兼職/外快 (Freelance) 💻", "獎金/津貼 (Bonus) 🎁", "投資回報 (Investment) 📈", "其他收入 (Other) 📝"],
+    account: ["現金 (Cash) 💵", "八達通 (Octopus) 🐙", "Alipay 📲", "PayMe 📱", "銀行帳戶 (Bank) 🏦", "信用卡 (Credit Card) 💳"]
+};
+
+// 讀取 LocalStorage 或使用預設值
+let appOptions = JSON.parse(localStorage.getItem('appOptions')) || defaultOptions;
+let currentModalType = ''; // 紀錄現在打開的是哪個管理視窗
+
+// 將選項渲染到畫面上的下拉選單
+function renderDropdowns() {
+    const type = document.getElementById('inputType').value; // 'expense' 或 'income'
+    
+    // 渲染分類
+    const catSelect = document.getElementById('inputCategory');
+    const currentCat = catSelect.value;
+    catSelect.innerHTML = '';
+    appOptions[type].forEach(opt => catSelect.add(new Option(opt, opt)));
+    if (appOptions[type].includes(currentCat)) catSelect.value = currentCat; 
+
+    // 渲染帳戶
+    const accSelect = document.getElementById('inputAccount');
+    const currentAcc = accSelect.value;
+    accSelect.innerHTML = '';
+    appOptions.account.forEach(opt => accSelect.add(new Option(opt, opt)));
+    if (appOptions.account.includes(currentAcc)) accSelect.value = currentAcc;
+}
+
+// ---------------- 管理面板邏輯 ----------------
+
+function openManageModal(mode) {
+    if (mode === 'category') {
+        currentModalType = document.getElementById('inputType').value; 
+        document.getElementById('modalTitle').innerText = currentLang === 'zh' ? '⚙️ 管理分類' : '⚙️ Manage Categories';
+    } else {
+        currentModalType = 'account';
+        document.getElementById('modalTitle').innerText = currentLang === 'zh' ? '⚙️ 管理帳戶' : '⚙️ Manage Accounts';
+    }
+    renderModalList();
+    document.getElementById('manageModal').style.display = 'flex';
+}
+
+function closeManageModal() {
+    document.getElementById('manageModal').style.display = 'none';
+    document.getElementById('newOptionInput').value = '';
+    renderDropdowns(); 
+}
+
+function renderModalList() {
+    const listEl = document.getElementById('modalList');
+    listEl.innerHTML = '';
+    const items = appOptions[currentModalType];
+
+    items.forEach((item, index) => {
+        const li = document.createElement('li');
+        li.className = 'modal-item';
+        li.innerHTML = `
+            <span>${item}</span>
+            <div class="modal-actions">
+                <button onclick="moveOption(${index}, -1)" ${index === 0 ? 'disabled' : ''}>⬆️</button>
+                <button onclick="moveOption(${index}, 1)" ${index === items.length - 1 ? 'disabled' : ''}>⬇️</button>
+                <button onclick="editOption(${index})">✏️</button>
+                <button onclick="deleteOption(${index})" style="color: #dc3545;">❌</button>
+            </div>
+        `;
+        listEl.appendChild(li);
+    });
+}
+
+// 新增選項
+function addNewOption() {
+    const input = document.getElementById('newOptionInput');
+    const val = input.value.trim();
+    if (val && !appOptions[currentModalType].includes(val)) {
+        appOptions[currentModalType].push(val);
+        saveOptions();
+        input.value = '';
+        renderModalList();
     }
 }
 
-function loadCustomOptions() {
-    ['inputAccount', 'inputCategory'].forEach(id => {
-        const key = id === 'inputAccount' ? 'customAccounts' : 'customCategories';
-        const saved = JSON.parse(localStorage.getItem(key)) || [];
-        const selectEl = document.getElementById(id);
-        saved.forEach(val => {
-            const opt = document.createElement('option'); opt.value = val; opt.text = val;
-            selectEl.insertBefore(opt, selectEl.options[selectEl.options.length - 1]);
-        });
-    });
+// 刪除選項
+function deleteOption(index) {
+    if (confirm(currentLang === 'zh' ? '確定要刪除這個選項嗎？' : 'Delete this option?')) {
+        appOptions[currentModalType].splice(index, 1);
+        saveOptions();
+        renderModalList();
+    }
 }
+
+// 修改選項
+function editOption(index) {
+    const oldVal = appOptions[currentModalType][index];
+    const newVal = prompt(currentLang === 'zh' ? '請輸入新名稱：' : 'Enter new name:', oldVal);
+    if (newVal && newVal.trim() !== '' && newVal !== oldVal) {
+        appOptions[currentModalType][index] = newVal.trim();
+        saveOptions();
+        renderModalList();
+    }
+}
+
+// 排序選項 (移動)
+function moveOption(index, direction) {
+    const arr = appOptions[currentModalType];
+    if (index + direction >= 0 && index + direction < arr.length) {
+        [arr[index], arr[index + direction]] = [arr[index + direction], arr[index]];
+        saveOptions();
+        renderModalList();
+    }
+}
+
+function saveOptions() {
+    localStorage.setItem('appOptions', JSON.stringify(appOptions));
+}
+
+// ==========================================
+// 🌍 多語系與介面切換邏輯
+// ==========================================
 
 function toggleLanguage() {
     currentLang = currentLang === 'zh' ? 'en' : 'zh';
@@ -361,26 +505,28 @@ function toggleLanguage() {
         const key = el.getAttribute('data-i18n-placeholder');
         if (translations[currentLang][key]) el.placeholder = translations[currentLang][key];
     });
-    updateDashboard(); applyTheme(); 
+    updateDashboard(); 
+    applyTheme(); 
 }
 
 function setTransactionType(type) {
     document.getElementById('inputType').value = type; 
-    const btnExp = document.getElementById('btnExpense'), btnInc = document.getElementById('btnIncome');
-    const optExp = document.getElementById('optExpense'), optInc = document.getElementById('optIncome');
+    const btnExp = document.getElementById('btnExpense');
+    const btnInc = document.getElementById('btnIncome');
+    
     if (type === 'expense') {
-        btnExp.classList.add('active'); btnInc.classList.remove('active');
-        if(optExp) optExp.style.display = 'block'; if(optInc) optInc.style.display = 'none';
-        document.getElementById('inputCategory').value = 'Meal';
+        btnExp.classList.add('active'); 
+        btnInc.classList.remove('active');
     } else {
-        btnInc.classList.add('active'); btnExp.classList.remove('active');
-        if(optExp) optExp.style.display = 'none'; if(optInc) optInc.style.display = 'block';
-        document.getElementById('inputCategory').value = 'Salary'; 
+        btnInc.classList.add('active'); 
+        btnExp.classList.remove('active');
     }
+    renderDropdowns(); // 切換類型時更新選單
 }
 
 function handleFilterChange() {
-    document.getElementById('customDateArea').style.display = (document.getElementById('filterTime').value === 'custom') ? 'block' : 'none';
+    const customArea = document.getElementById('customDateArea');
+    customArea.style.display = (document.getElementById('filterTime').value === 'custom') ? 'block' : 'none';
     updateDashboard(); 
 }
 
@@ -396,8 +542,10 @@ function applyTheme() {
 }
 
 function toggleTheme() {
-    isDarkMode = !isDarkMode; localStorage.setItem('darkMode', isDarkMode); 
-    applyTheme(); updateDashboard();
+    isDarkMode = !isDarkMode; 
+    localStorage.setItem('darkMode', isDarkMode); 
+    applyTheme(); 
+    updateDashboard();
 }
 
 function applyBackground() {
@@ -407,7 +555,9 @@ function applyBackground() {
         document.body.style.backgroundSize = 'cover';
         document.body.style.backgroundAttachment = 'fixed';
         document.body.style.backgroundPosition = 'center';
-    } else { document.body.style.backgroundImage = 'none'; }
+    } else { 
+        document.body.style.backgroundImage = 'none'; 
+    }
 }
 
 function changeBackground(event) {
@@ -415,17 +565,31 @@ function changeBackground(event) {
     if (file) {
         const reader = new FileReader();
         reader.onload = function(e) {
-            try { localStorage.setItem('myBgImage', e.target.result); applyBackground(); } 
-            catch (err) { alert(translations[currentLang].alertBgSize); document.getElementById('bgInput').value = ''; }
+            try { 
+                localStorage.setItem('myBgImage', e.target.result); 
+                applyBackground(); 
+            } catch (err) { 
+                alert(translations[currentLang].alertBgSize); 
+                document.getElementById('bgInput').value = ''; 
+            }
         };
         reader.readAsDataURL(file); 
     }
 }
 
-function clearBackground() { localStorage.removeItem('myBgImage'); document.getElementById('bgInput').value = ''; applyBackground(); }
-function formatMoney(num) { return parseFloat(num.toFixed(2)).toLocaleString('en-US'); }
+function clearBackground() { 
+    localStorage.removeItem('myBgImage'); 
+    document.getElementById('bgInput').value = ''; 
+    applyBackground(); 
+}
+
+function formatMoney(num) { 
+    return parseFloat(num.toFixed(2)).toLocaleString('en-US'); 
+}
+
 function formatDate(dateString) {
-    if (!dateString) return ''; const parts = dateString.split('-'); 
+    if (!dateString) return ''; 
+    const parts = dateString.split('-'); 
     return (parts.length === 3) ? `${parts[2]}/${parts[1]}/${parts[0]}` : dateString;
 }
 
@@ -433,4 +597,4 @@ function formatDate(dateString) {
 applyBackground();
 applyTheme();
 setTransactionType('expense');
-loadCustomOptions(); // 👈 啟動時自動載入你存過的自訂選項
+renderDropdowns();

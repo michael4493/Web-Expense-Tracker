@@ -28,9 +28,8 @@ h1 {
     transition: all 0.3s ease;
 }
 
-/* 深色模式下的標題：變成帶有科技感的霓虹微光 */
 body.dark-mode h1 { 
-    color: #f8fafc !important; /* 強制覆蓋，確保在深色模式下是最亮的白 */
+    color: #f8fafc !important; 
     text-shadow: 2px 4px 8px rgba(0,0,0,0.6), 0 0 20px rgba(59, 130, 246, 0.6) !important;
 }
 
@@ -43,17 +42,16 @@ body.dark-mode h1 {
     align-items: center;
     margin-bottom: 25px;
     padding-bottom: 15px;
-    border-bottom: 2px dashed rgba(0, 0, 0, 0.1); /* 報表專屬的虛線分隔線，超有質感 */
+    border-bottom: 2px dashed rgba(0, 0, 0, 0.1); 
     transition: border-color 0.3s ease;
 }
 
 .header-container h1 {
-    margin-bottom: 0; /* 清除標題自帶的底部空間，讓它跟按鈕完美對齊 */
-    font-size: 1.8rem; /* 報表頁的標題稍微縮小一點，看起來更精緻 */
+    margin-bottom: 0; 
+    font-size: 1.8rem; 
     text-align: left;
 }
 
-/* 深色模式下的分隔線 */
 body.dark-mode .header-container {
     border-bottom-color: rgba(255, 255, 255, 0.15);
 }
@@ -62,20 +60,17 @@ body.dark-mode .header-container {
    ✨ 核心：毛玻璃卡片設計 (Glassmorphism)
    ========================================== */
 .card {
-    /* 👇 讓白色變得更透明 (從 0.85 降到 0.55)，透出極光背景 */
     background: rgba(255, 255, 255, 0.55); 
-    backdrop-filter: blur(16px); /* 增加模糊度，讓透出來的光更柔和 */
+    backdrop-filter: blur(16px); 
     -webkit-backdrop-filter: blur(16px); 
-    border: 1px solid rgba(255, 255, 255, 0.8); /* 加強白色高光邊框 */
-    /* ... 後面原本的 padding, border-radius 等設定維持不變 ... */
+    border: 1px solid rgba(255, 255, 255, 0.8); 
     padding: 25px;
     border-radius: 20px; 
-    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.07); /* 陰影加上一點點神祕的藍紫色調 */
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.07); 
     margin-bottom: 25px;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-/* 滑鼠移到卡片上時微微浮起 */
 .card:hover {
     transform: translateY(-3px);
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
@@ -89,8 +84,9 @@ body.dark-mode .header-container {
     justify-content: space-between;
     text-align: center;
     margin-bottom: 25px;
-    gap: 15px; /* 取代 margin 確保間距完美 */
+    gap: 15px; 
 }
+
 .summary-box {
     flex: 1;
     padding: 20px 10px;
@@ -100,7 +96,10 @@ body.dark-mode .header-container {
     box-shadow: 0 4px 15px rgba(0,0,0,0.05);
     transition: transform 0.3s ease;
 }
-.summary-box:hover { transform: scale(1.02); }
+
+.summary-box:hover { 
+    transform: scale(1.02); 
+}
 
 .bg-income { background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); color: #155724; }
 .bg-expense { background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%); color: #721c24; }
@@ -124,7 +123,6 @@ input, select {
     font-family: inherit;
 }
 
-/* 當點擊輸入框時的發光效果 */
 input:focus, select:focus {
     outline: none;
     border-color: #80bdff;
@@ -146,29 +144,31 @@ button {
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* 確認新增按鈕 */
 button[onclick="addTransaction()"] {
     background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
     color: white;
     box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
     margin-top: 15px;
 }
+
 button[onclick="addTransaction()"]:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
 }
-button[onclick="addTransaction()"]:active { transform: translateY(1px); }
 
-/* 其他小按鈕共用樣式 */
+button[onclick="addTransaction()"]:active { 
+    transform: translateY(1px); 
+}
+
 .lang-btn, .theme-btn {
-    border-radius: 20px; /* 藥丸形狀 */
+    border-radius: 20px; 
     font-size: 14px;
     font-weight: 500;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
-/* 交易類型雙按鈕 */
 .type-btn-group { display: flex; gap: 10px; }
+
 .type-btn {
     flex: 1;
     margin-top: 0;
@@ -177,6 +177,7 @@ button[onclick="addTransaction()"]:active { transform: translateY(1px); }
     border: 2px solid #e9ecef;
     border-radius: 12px;
 }
+
 #btnExpense.active { background-color: #dc3545; color: white; border-color: #dc3545; box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3); }
 #btnIncome.active { background-color: #28a745; color: white; border-color: #28a745; box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3); }
 
@@ -198,6 +199,7 @@ li {
     align-items: center;
     transition: transform 0.2s ease;
 }
+
 li:hover { transform: scale(1.01); }
 .li-expense { border-left-color: #ff4757; }
 .li-income { border-left-color: #2ed573; }
@@ -218,15 +220,16 @@ li:hover { transform: scale(1.01); }
    🌙 深色模式適配 (Dark Mode with Glass)
    ========================================== */
 body.dark-mode {
-    background-color: #0f172a; /* 現代海軍深藍 */
+    background-color: #0f172a; 
     color: #f8fafc;
 }
+
 body.dark-mode h1 { color: #f8fafc; }
 body.dark-mode label { color: #cbd5e1; }
 
 body.dark-mode .card,
 body.dark-mode div[style*="background: white"] {
-    background: rgba(30, 41, 59, 0.7) !important; /* 深色毛玻璃 */
+    background: rgba(30, 41, 59, 0.7) !important; 
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
 }
@@ -237,6 +240,7 @@ body.dark-mode select {
     color: #f8fafc;
     border-color: #334155;
 }
+
 body.dark-mode input:focus, body.dark-mode select:focus {
     border-color: #3b82f6;
     box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
@@ -273,19 +277,18 @@ body.dark-mode #incomeReport {
     transition: all 0.3s ease !important;
 }
 
-/* 滑鼠懸浮時微微亮起浮動 */
 .theme-btn:hover, .lang-btn:hover {
     background: #ffffff !important;
     transform: translateY(-2px) !important;
     box-shadow: 0 6px 15px rgba(0,0,0,0.1) !important;
 }
 
-/* 深色模式下的頂部按鈕 */
 body.dark-mode .theme-btn, body.dark-mode .lang-btn {
     background: rgba(30, 41, 59, 0.8) !important;
     color: #f8fafc !important;
     border-color: rgba(255, 255, 255, 0.2) !important;
 }
+
 body.dark-mode .theme-btn:hover, body.dark-mode .lang-btn:hover {
     background: rgba(51, 65, 85, 0.95) !important;
 }
@@ -293,7 +296,6 @@ body.dark-mode .theme-btn:hover, body.dark-mode .lang-btn:hover {
 /* ==========================================
    💡 底部回饋問卷按鈕美化
    ========================================== */
-/* 透過強制覆蓋，把原本 HTML 裡的舊設計換成現代化漸層 */
 a[href*="forms.gle"] button {
     background: linear-gradient(135deg, #17a2b8 0%, #117a8b 100%) !important;
     color: white !important;
@@ -319,8 +321,6 @@ a[href*="forms.gle"] button:hover {
     border-collapse: separate; 
     border-spacing: 0;
     margin-top: 20px;
-    
-    /* 👇 讓表格也變透明 (從 0.7 降到 0.5) */
     background: rgba(255, 255, 255, 0.5);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
@@ -342,20 +342,18 @@ a[href*="forms.gle"] button:hover {
     color: #2c3e50;
 }
 
-/* 移除最後一行的底線，看起來更乾淨 */
 .details-table tbody tr:last-child td {
     border-bottom: none; 
 }
 
-/* 🖱️ 加入互動動畫：滑鼠移過該列時，微微亮起 */
 .details-table tbody tr {
     transition: background-color 0.3s ease;
 }
+
 .details-table tbody tr:hover {
     background-color: rgba(255, 255, 255, 0.95);
 }
 
-/* 文字顏色標示 (從 HTML 搬過來的) */
 .text-income { color: #28a745; font-weight: bold; }
 .text-expense { color: #dc3545; font-weight: bold; }
 
@@ -386,11 +384,11 @@ body.dark-mode .details-table tbody tr:hover {
    ✖️ 關閉分頁按鈕美化 (.close-btn)
    ========================================== */
 .close-btn {
-    background: rgba(108, 117, 125, 0.1) !important; /* 微透明的質感灰 */
+    background: rgba(108, 117, 125, 0.1) !important; 
     color: #495057 !important;
     border: 1px solid rgba(108, 117, 125, 0.3) !important;
     padding: 8px 18px !important;
-    border-radius: 20px !important; /* 圓潤的膠囊狀 */
+    border-radius: 20px !important; 
     font-size: 14px !important;
     font-weight: 600 !important;
     width: auto !important;
@@ -399,7 +397,6 @@ body.dark-mode .details-table tbody tr:hover {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
-/* 滑鼠懸浮時：變成警告的紅色，並微微浮起 */
 .close-btn:hover {
     background: #dc3545 !important;
     color: white !important;
@@ -408,7 +405,6 @@ body.dark-mode .details-table tbody tr:hover {
     box-shadow: 0 6px 15px rgba(220, 53, 69, 0.3) !important;
 }
 
-/* 深色模式下的關閉按鈕 */
 body.dark-mode .close-btn {
     background: rgba(255, 255, 255, 0.05) !important;
     color: #cbd5e1 !important;
@@ -416,7 +412,7 @@ body.dark-mode .close-btn {
 }
 
 body.dark-mode .close-btn:hover {
-    background: #ef4444 !important; /* 深色模式下更亮眼的紅 */
+    background: #ef4444 !important; 
     color: white !important;
     border-color: #ef4444 !important;
     box-shadow: 0 6px 15px rgba(239, 68, 68, 0.4) !important;
@@ -425,28 +421,92 @@ body.dark-mode .close-btn:hover {
 /* =========================================
    📱 iOS 瀏覽器與介面相容性修復區
    ========================================= */
-
-/* 1. 修復 iOS 日期輸入框右側的突起方格與原生樣式 */
 input[type="date"] {
-    -webkit-appearance: none; /* 拔除蘋果預設樣式 */
+    -webkit-appearance: none; 
     appearance: none;
     background-color: transparent; 
-    min-height: 40px; /* 確保高度不會被 iOS 壓扁 */
+    min-height: 40px; 
 }
 
-/* 2. 修復 iOS 按鈕文字顏色與半透明反白問題 */
 button, 
 .theme-btn, 
 .lang-btn, 
 .delete-btn {
     -webkit-appearance: none;
     appearance: none;
-    opacity: 1 !important; /* 防止 iOS 擅自把按鈕變半透明 */
+    opacity: 1 !important; 
 }
 
-/* 確保那三個特定按鈕的字體顏色在手機上是純白/清晰的 */
+button[onclick="window.open('details.html', '_blank')"],
 button[onclick="clearAllData()"],
 button[onclick="clearBackground()"],
-a button /* 假設詳細檢視是用 <a> 包著 <button> */ {
+a button {
     color: #ffffff !important; 
+}
+
+/* ==========================================
+   ⚙️ 管理面板 (Modal) 樣式
+   ========================================== */
+.modal-overlay {
+    position: fixed; 
+    top: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5); 
+    backdrop-filter: blur(5px);
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    z-index: 1000;
+}
+
+.modal-content {
+    width: 90%; 
+    max-width: 400px; 
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.95);
+    display: flex; 
+    flex-direction: column;
+}
+
+.modal-item {
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+    padding: 10px; 
+    border-bottom: 1px solid rgba(0,0,0,0.1); 
+    background: none; 
+    box-shadow: none; 
+    border-left: none; 
+    margin-bottom: 0;
+}
+
+.modal-item span { 
+    flex: 1; 
+    font-weight: bold; 
+}
+
+.modal-actions button {
+    width: auto; 
+    padding: 5px; 
+    margin-left: 5px; 
+    font-size: 14px; 
+    background: #f8f9fa; 
+    color: #495057; 
+    border: 1px solid #ced4da;
+}
+
+body.dark-mode .modal-content { 
+    background: rgba(30, 41, 59, 0.95); 
+}
+
+body.dark-mode .modal-item { 
+    border-bottom-color: rgba(255,255,255,0.1); 
+}
+
+body.dark-mode .modal-actions button { 
+    background: #334155; 
+    color: #f8fafc; 
+    border-color: #475569; 
 }

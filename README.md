@@ -1,6 +1,6 @@
 # 💰 Web Expense Tracker (肥蟲記賬本 🐛)
 
-A responsive, full-stack expense tracking web application featuring a modern Glassmorphism UI, real-time cloud synchronization, and interactive data visualization. 
+A responsive, full-stack expense tracking web application featuring a modern Glassmorphism UI, real-time cloud synchronization, and interactive data visualization.
 
 這是一款具備現代化「毛玻璃 (Glassmorphism)」介面設計的全端記帳網頁應用，支援雲端即時同步、中英語言與圖表分析功能。
 

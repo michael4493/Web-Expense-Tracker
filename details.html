@@ -47,7 +47,7 @@
                 </tr>
             </thead>
             <tbody id="tableBody">
-                </tbody>
+            </tbody>
         </table>
 
     </div>
@@ -165,8 +165,10 @@
                     const startVal = document.getElementById('customStartDate').value;
                     const endVal = document.getElementById('customEndDate').value;
                     if (!startVal || !endVal) return true;
-                    const startDate = new Date(startVal); startDate.setHours(0, 0, 0, 0);
-                    const endDate = new Date(endVal); endDate.setHours(23, 59, 59, 999);
+                    const startDate = new Date(startVal); 
+                    startDate.setHours(0, 0, 0, 0);
+                    const endDate = new Date(endVal); 
+                    endDate.setHours(23, 59, 59, 999);
                     return tDate >= startDate && tDate <= endDate;
                 }
             });
