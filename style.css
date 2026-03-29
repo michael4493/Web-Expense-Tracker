@@ -421,3 +421,32 @@ body.dark-mode .close-btn:hover {
     border-color: #ef4444 !important;
     box-shadow: 0 6px 15px rgba(239, 68, 68, 0.4) !important;
 }
+
+/* =========================================
+   📱 iOS 瀏覽器與介面相容性修復區
+   ========================================= */
+
+/* 1. 修復 iOS 日期輸入框右側的突起方格與原生樣式 */
+input[type="date"] {
+    -webkit-appearance: none; /* 拔除蘋果預設樣式 */
+    appearance: none;
+    background-color: transparent; 
+    min-height: 40px; /* 確保高度不會被 iOS 壓扁 */
+}
+
+/* 2. 修復 iOS 按鈕文字顏色與半透明反白問題 */
+button, 
+.theme-btn, 
+.lang-btn, 
+.delete-btn {
+    -webkit-appearance: none;
+    appearance: none;
+    opacity: 1 !important; /* 防止 iOS 擅自把按鈕變半透明 */
+}
+
+/* 確保那三個特定按鈕的字體顏色在手機上是純白/清晰的 */
+button[onclick="clearAllData()"],
+button[onclick="clearBackground()"],
+a button /* 假設詳細檢視是用 <a> 包著 <button> */ {
+    color: #ffffff !important; 
+}

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>💰肥蟲記帳本💰</title>
+    <title>💰肥蟲記帳簿💰</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
@@ -32,8 +32,9 @@
         
         <select id="filterTime" onchange="handleFilterChange()" style="width: auto; min-width: 180px; margin-bottom: 0;">
             <option value="all" data-i18n="rangeAll">全部紀錄 (All Time)</option>
-            <option value="month" data-i18n="rangeMonth">這個月 (This Month)</option>
+            <option value="today" data-i18n="rangeDay">本日 (Today)</option>
             <option value="week" data-i18n="rangeWeek">最近 7 天 (Last 7 Days)</option>
+            <option value="month" data-i18n="rangeMonth">這個月 (This Month)</option>
             <option value="custom" data-i18n="rangeCustom">自訂範圍 (Custom)</option>
         </select>
         
@@ -53,6 +54,8 @@
         </div>
         <div class="summary-box bg-save">
             <span data-i18n="currentBalance">目前結餘</span><br>$<span id="totalBalance">0</span>
+            <div id="accountBalances" style="font-size: 13px; margin-top: 8px; border-top: 1px solid rgba(255,255,255,0.4); padding-top: 8px; text-align: left; font-weight: normal;">
+            </div>
         </div>
     </div>
 
@@ -74,7 +77,7 @@
 
         <div class="form-group">
             <label data-i18n="category">用途 / 分類</label>
-            <select id="inputCategory">
+            <select id="inputCategory" onchange="handleCustomOption(this, 'customCategories')">
                 <optgroup label="支出用途" id="optExpense">  
                     <option value="Meal">Meal🥔🍳🧋</option>
                     <option value="Entertainment">Entertainment🎮 (娛樂)</option>
@@ -92,13 +95,14 @@
                     <option value="Scholarship">Scholarship💯</option>
                     <option value="Gift">Gift🫴</option>
                     <option value="Other">Other📝</option>    
-                </optgroup>                
+                </optgroup>    
+                <option value="custom" style="font-weight: bold; color: #007bff;">➕ 自訂新分類...</option>            
             </select>
         </div>
 
         <div class="form-group">
             <label data-i18n="accountSource">帳戶 / 來源</label>
-            <select id="inputAccount">
+            <select id="inputAccount" onchange="handleCustomOption(this, 'customAccounts')">
                 <optgroup label="帳戶 (Accounts)">
                     <option value="Cash">Cash💵</option>
                     <option value="Credit Card DBS">Credit Card DBS💳</option>
@@ -116,6 +120,7 @@
                     <option value="Grandma">Grandma👵</option>
                     <option value="Other">Other📝</option>
                 </optgroup>
+                <option value="custom" style="font-weight: bold; color: #007bff;">➕ 自訂新帳戶...</option>
             </select>
         </div>
 

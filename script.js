@@ -11,18 +11,17 @@ const firebaseConfig = {
     appId: "1:749226836398:web:7a5d5995ab85394fccc83f"
 };
 
-// 啟動 Firebase 引擎
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-let currentUser = null; // 記錄目前的登入者
-let transactions = [];  // 雲端資料存放區
+let currentUser = null; 
+let transactions = [];  
+let editingId = null; // 追蹤目前正在修改哪一筆資料
 
 let expenseChartInstance = null; 
 let incomeChartInstance = null;  
 
-// 設定今日預設日期
 document.getElementById('inputDate').valueAsDate = new Date();
 
 // ==========================================
@@ -34,7 +33,7 @@ const translations = {
         viewRange: "📅 查看範圍：", currentBalance: "目前結餘", addTransaction: "➕ 新增交易",
         date: "日期", transactionType: "交易類型", expenseBtn: "支出💸", incomeBtn: "收入💰", 
         category: "用途 / 分類", accountSource: "帳戶 / 來源", amount: "金額",
-        amountPlaceholder: "輸入金額 (HKD)", confirmAdd: "確認新增",
+        amountPlaceholder: "輸入金額 (HKD)", confirmAdd: "確認新增", confirmEdit: "💾 儲存修改",
         expenseAnalysis: "📈 支出分析", noExpenseData: "目前尚無支出資料可供分析 💸",
         incomeAnalysis: "💰 收入來源分析", noIncomeData: "目前尚無收入資料可供分析 💰",
         recentRecords: "📝 最近交易紀錄", clearAll: "🗑️ 清除所有紀錄",
@@ -50,7 +49,7 @@ const translations = {
         viewRange: "📅 View Range: ", currentBalance: "Current Balance", addTransaction: "➕ Add Transaction",
         date: "Date", transactionType: "Transaction Type", expenseBtn: "Expense💸", incomeBtn: "Income💰", 
         category: "Category", accountSource: "Account / Source", amount: "Amount",
-        amountPlaceholder: "Enter Amount (HKD)", confirmAdd: "Confirm Add",
+        amountPlaceholder: "Enter Amount (HKD)", confirmAdd: "Confirm Add", confirmEdit: "💾 Save Changes",
         expenseAnalysis: "📈 Expense Analysis", noExpenseData: "No expense data available for analysis 💸",
         incomeAnalysis: "💰 Income Analysis", noIncomeData: "No income data available for analysis 💰",
         recentRecords: "📝 Recent Records", clearAll: "🗑️ Clear All Records",
@@ -71,16 +70,10 @@ let isDarkMode = localStorage.getItem('darkMode') !== 'false';
 // ==========================================
 function loginWithGoogle() {
     const provider = new firebase.auth.GoogleAuthProvider();
-    auth.signInWithPopup(provider).catch((error) => {
-        alert("登入失敗：" + error.message);
-    });
+    auth.signInWithPopup(provider).catch((error) => alert("登入失敗：" + error.message));
 }
+function logout() { auth.signOut(); }
 
-function logout() {
-    auth.signOut();
-}
-
-// 監聽登入狀態並自動抓取雲端資料
 auth.onAuthStateChanged((user) => {
     const userInfoDiv = document.getElementById('userInfo');
     if (user) {
@@ -89,11 +82,9 @@ auth.onAuthStateChanged((user) => {
             <span style="margin-right: 15px;">👋 Hi, ${user.displayName}</span>
             <button onclick="logout()" class="theme-btn" style="background: #dc3545; color: white; border: none;">登出 (Logout)</button>
         `;
-        fetchTransactionsFromCloud(); // 登入後，立刻去雲端下載帳本！
+        fetchTransactionsFromCloud(); 
     } else {
-        currentUser = null;
-        transactions = []; // 登出時清空畫面
-        updateDashboard();
+        currentUser = null; transactions = []; updateDashboard();
         userInfoDiv.innerHTML = `
             <button onclick="loginWithGoogle()" class="theme-btn" style="background: #4285F4; color: white; border: none; box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3) !important;">
                 🔒 Google 登入 (Login)
@@ -102,30 +93,20 @@ auth.onAuthStateChanged((user) => {
     }
 });
 
-// 下載雲端資料
 async function fetchTransactionsFromCloud() {
     if (!currentUser) return;
     try {
         const snapshot = await db.collection('users').doc(currentUser.uid).collection('transactions').get();
-        transactions = snapshot.docs.map(doc => {
-            const data = doc.data();
-            data.id = doc.id; 
-            return data;
-        });
+        transactions = snapshot.docs.map(doc => { const data = doc.data(); data.id = doc.id; return data; });
         updateDashboard();
-    } catch (error) {
-        console.error("讀取資料失敗：", error);
-    }
+    } catch (error) { console.error("讀取資料失敗：", error); }
 }
 
 // ==========================================
-// 🚀 核心功能：新增、刪除、清空 (雲端版)
+// 🚀 核心功能：新增/修改、刪除、清空 (雲端版)
 // ==========================================
 async function addTransaction() {
-    if (!currentUser) {
-        alert("請先登入 Google 帳號才能記帳喔！");
-        return;
-    }
+    if (!currentUser) { alert("請先登入 Google 帳號才能記帳喔！"); return; }
 
     const date = document.getElementById('inputDate').value;
     const type = document.getElementById('inputType').value;
@@ -134,29 +115,31 @@ async function addTransaction() {
     const amount = Math.round(parseFloat(document.getElementById('inputAmount').value) * 100) / 100;
     const remark = document.getElementById('inputRemark').value;
 
-    if (!date || isNaN(amount) || amount <= 0) {
-        alert(translations[currentLang].alertInput);
-        return;
-    }
+    if (!date || isNaN(amount) || amount <= 0) { alert(translations[currentLang].alertInput); return; }
 
     const transactionData = { date, type, account, category, amount, remark };
-
-    // 先讓按鈕變成「處理中...」，避免重複點擊
     const btn = document.querySelector('button[onclick="addTransaction()"]');
-    btn.innerText = "⏳ 雲端同步中...";
-    btn.disabled = true;
+    btn.innerText = "⏳ 雲端同步中..."; btn.disabled = true;
 
     try {
-        const docRef = await db.collection('users').doc(currentUser.uid).collection('transactions').add(transactionData);
-        transactionData.id = docRef.id;
-        transactions.push(transactionData);
-
+        if (editingId) {
+            // 🔄 修改模式
+            await db.collection('users').doc(currentUser.uid).collection('transactions').doc(editingId).update(transactionData);
+            const index = transactions.findIndex(t => t.id === editingId);
+            transactions[index] = { ...transactionData, id: editingId };
+            editingId = null; 
+            btn.style.background = ""; // 恢復按鈕顏色
+        } else {
+            // ➕ 新增模式
+            const docRef = await db.collection('users').doc(currentUser.uid).collection('transactions').add(transactionData);
+            transactionData.id = docRef.id;
+            transactions.push(transactionData);
+        }
         document.getElementById('inputAmount').value = '';
         document.getElementById('inputRemark').value = '';
         updateDashboard();
-    } catch (error) {
-        alert("新增失敗：" + error.message);
-    } finally {
+    } catch (error) { alert("操作失敗：" + error.message); } 
+    finally {
         btn.innerText = translations[currentLang].confirmAdd;
         btn.disabled = false;
     }
@@ -169,9 +152,7 @@ async function deleteTransaction(id) {
             await db.collection('users').doc(currentUser.uid).collection('transactions').doc(id).delete();
             transactions = transactions.filter(t => t.id !== id);
             updateDashboard();
-        } catch(error) {
-            alert("刪除失敗：" + error.message);
-        }
+        } catch(error) { alert("刪除失敗：" + error.message); }
     }
 }
 
@@ -183,38 +164,63 @@ async function clearAllData() {
             const batch = db.batch();
             snapshot.docs.forEach(doc => batch.delete(doc.ref));
             await batch.commit(); 
-            
-            transactions = [];
-            updateDashboard();
-        } catch(error) {
-            alert("清除失敗：" + error.message);
-        }
+            transactions = []; updateDashboard();
+        } catch(error) { alert("清除失敗：" + error.message); }
     }
+}
+
+// ✏️ 進入修改模式
+function editTransaction(id) {
+    const t = transactions.find(x => x.id === id);
+    if (!t) return;
+    
+    document.getElementById('inputDate').value = t.date;
+    setTransactionType(t.type); 
+    
+    // 檢查下拉選單有沒有這個選項，沒有就暫時補上
+    if (!Array.from(document.getElementById('inputAccount').options).some(o => o.value === t.account)) {
+        document.getElementById('inputAccount').add(new Option(t.account, t.account), 0);
+    }
+    if (!Array.from(document.getElementById('inputCategory').options).some(o => o.value === t.category)) {
+        document.getElementById('inputCategory').add(new Option(t.category, t.category), 0);
+    }
+
+    document.getElementById('inputAccount').value = t.account;
+    document.getElementById('inputCategory').value = t.category;
+    document.getElementById('inputAmount').value = t.amount;
+    document.getElementById('inputRemark').value = t.remark || '';
+    
+    editingId = id; 
+    const btn = document.querySelector('button[onclick="addTransaction()"]');
+    btn.innerHTML = translations[currentLang].confirmEdit;
+    btn.style.background = "#ffc107"; btn.style.color = "#000"; // 變成醒目的黃色
+    window.scrollTo({ top: 0, behavior: 'smooth' }); 
 }
 
 // ==========================================
 // 🎨 UI 渲染與畫面更新
 // ==========================================
 function updateDashboard() {
-    let totalIncome = 0;
-    let totalExpense = 0;
-    const listEl = document.getElementById('transactionList');
-    listEl.innerHTML = ''; 
+    let totalIncome = 0; let totalExpense = 0;
+    const listEl = document.getElementById('transactionList'); listEl.innerHTML = ''; 
 
-    const expenseData = {};
-    const incomeData = {}; 
+    const expenseData = {}; const incomeData = {}; 
+    let accountTotals = {}; // 👈 紀錄各帳戶結餘
+
     const filterVal = document.getElementById('filterTime').value;
     const today = new Date(); 
 
     let filteredTransactions = transactions.filter(t => {
         if (filterVal === 'all') return true; 
         const tDate = new Date(t.date); 
+        if (filterVal === 'today') {
+            return tDate.toDateString() === today.toDateString(); // 👈 本日篩選邏輯
+        }
         if (filterVal === 'month') {
             return tDate.getMonth() === today.getMonth() && tDate.getFullYear() === today.getFullYear();
         }
         if (filterVal === 'week') {
-            const diffTime = today - tDate;
-            const diffDays = diffTime / (1000 * 60 * 60 * 24);
+            const diffTime = today - tDate; const diffDays = diffTime / (1000 * 60 * 60 * 24);
             return diffDays >= 0 && diffDays <= 7;
         }
         if (filterVal === 'custom') {
@@ -227,29 +233,30 @@ function updateDashboard() {
         }
     });
 
-    // 依照日期新舊排序
     filteredTransactions.sort((a, b) => new Date(b.date) - new Date(a.date));
 
     filteredTransactions.forEach(t => {
         if (t.type === 'income') {
-            totalIncome += t.amount;
-            incomeData[t.account] = (incomeData[t.account] || 0) + t.amount;
+            totalIncome += t.amount; incomeData[t.account] = (incomeData[t.account] || 0) + t.amount;
         } else if (t.type === 'expense') {
-            totalExpense += t.amount;
-            expenseData[t.category] = (expenseData[t.category] || 0) + t.amount;
+            totalExpense += t.amount; expenseData[t.category] = (expenseData[t.category] || 0) + t.amount;
         }
+
+        // 👈 計算各帳戶餘額
+        if (!accountTotals[t.account]) accountTotals[t.account] = 0;
+        accountTotals[t.account] += (t.type === 'income' ? t.amount : -t.amount);
 
         const li = document.createElement('li');
         li.className = (t.type === 'income') ? 'li-income' : 'li-expense';
         const remarkText = t.remark ? `<br><small style="color: #6c757d; margin-top: 4px; display: inline-block;">📝 ${t.remark}</small>` : '';
 
-        // ⚠️ 這裡的 t.id 已經用單引號包起來，修復了刪除按鈕的問題
+        // 👈 加入修改按鈕 (✏️)
         li.innerHTML = `
+            <span><strong>${formatDate(t.date)}</strong> | ${t.account} -> ${t.category} ${remarkText}</span>
             <span>
-                <strong>${formatDate(t.date)}</strong> | ${t.account} -> ${t.category}
-                ${remarkText} </span>
-            <span>
-                $${formatMoney(t.amount)} <button class="delete-btn" onclick="deleteTransaction('${t.id}')">❌</button>
+                $${formatMoney(t.amount)} 
+                <button class="theme-btn" style="padding: 2px 8px; font-size: 14px; background: #ffc107; color: #000; border: none; min-width: auto; margin-left: 10px;" onclick="editTransaction('${t.id}')">✏️</button>
+                <button class="delete-btn" style="min-width: auto; margin-left: 5px;" onclick="deleteTransaction('${t.id}')">❌</button>
             </span>
         `;
         listEl.appendChild(li); 
@@ -259,38 +266,47 @@ function updateDashboard() {
     document.getElementById('totalExpense').innerText = formatMoney(totalExpense);
     document.getElementById('totalBalance').innerText = formatMoney(totalIncome - totalExpense);
 
+    // 👈 渲染各帳戶結餘到畫面上
+    const accBalDiv = document.getElementById('accountBalances');
+    if (accBalDiv) {
+        accBalDiv.innerHTML = Object.keys(accountTotals)
+            .map(acc => `<div style="display:flex; justify-content:space-between; margin-bottom: 4px;"><span>🏦 ${acc}</span><span style="font-weight:bold; color: ${accountTotals[acc] < 0 ? '#dc3545' : '#28a745'};">$${formatMoney(accountTotals[acc])}</span></div>`)
+            .join('');
+    }
+
     expenseChartInstance = drawChart('expenseChart', expenseData, expenseChartInstance);
     incomeChartInstance = drawChart('incomeChart', incomeData, incomeChartInstance);
 
     generateAnalysis(expenseData, totalExpense, 'analysisReport', translations[currentLang].expenseHighlight, '#dc3545', translations[currentLang].noExpenseData);
     generateAnalysis(incomeData, totalIncome, 'incomeReport', translations[currentLang].incomeHighlight, '#28a745', translations[currentLang].noIncomeData);
 
-    // 🌉 本機同步橋樑：把雲端資料複製一份給 details.html 用！
     localStorage.setItem('myExpenses', JSON.stringify(transactions));
 }
 
 function drawChart(canvasId, dataObj, chartInstance) {
     const ctx = document.getElementById(canvasId).getContext('2d');
     if (chartInstance) { chartInstance.destroy(); }
+    
+    const textColor = isDarkMode ? '#ffffff' : '#666666';
+    const borderColor = isDarkMode ? '#1e1e1e' : '#ffffff'; 
+
     return new Chart(ctx, {
         type: 'doughnut',
         data: {
             labels: Object.keys(dataObj),
             datasets: [{
                 data: Object.values(dataObj),
-                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#E7E9ED', '#8AC926', '#1982C4', '#F15BB5', '#00F5D4', '#9B5DE5', '#FEE440']
+                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#E7E9ED', '#8AC926', '#1982C4', '#F15BB5', '#00F5D4', '#9B5DE5', '#FEE440'],
+                borderColor: borderColor, borderWidth: 2
             }]
         },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: textColor } } } }
     });
 }
 
 function generateAnalysis(dataObj, totalAmt, targetId, highlightName, colorHex, emptyMsg) {
     const reportEl = document.getElementById(targetId);
-    if (totalAmt === 0 || Object.keys(dataObj).length === 0) {
-        reportEl.innerHTML = emptyMsg; 
-        return;
-    }
+    if (totalAmt === 0 || Object.keys(dataObj).length === 0) { reportEl.innerHTML = emptyMsg; return; }
     let maxCategory = '', maxAmount = 0, detailsHTML = "<ul style='padding-left: 20px; margin-top: 10px;'>";
     for (const category in dataObj) {
         const amount = parseFloat(dataObj[category].toFixed(2));
@@ -298,15 +314,43 @@ function generateAnalysis(dataObj, totalAmt, targetId, highlightName, colorHex, 
         detailsHTML += `<li style="margin-bottom: 5px; border-left: none; padding: 0; box-shadow: none; background: none;"><strong>${category}</strong>: $${formatMoney(amount)} (${percentage}%)</li>`;
         if (amount > maxAmount) { maxAmount = amount; maxCategory = category; }
     }
-    reportEl.innerHTML = `
-        <div style="font-size: 16px; margin-bottom: 10px;">💡 <strong>${highlightName}：</strong> ${translations[currentLang].maxSource}「<span style="color: ${colorHex}; font-weight: bold;">${maxCategory}</span>」，${translations[currentLang].totalAmt} <strong>$${formatMoney(maxAmount)}</strong>！</div>
-        <div><strong>📊 ${translations[currentLang].detailRatio}：</strong></div>${detailsHTML}
-    `;
+    reportEl.innerHTML = `<div style="font-size: 16px; margin-bottom: 10px;">💡 <strong>${highlightName}：</strong> ${translations[currentLang].maxSource}「<span style="color: ${colorHex}; font-weight: bold;">${maxCategory}</span>」，${translations[currentLang].totalAmt} <strong>$${formatMoney(maxAmount)}</strong>！</div><div><strong>📊 ${translations[currentLang].detailRatio}：</strong></div>${detailsHTML}`;
 }
 
 // ==========================================
-// ⚙️ 其他輔助與切換工具
+// ⚙️ 其他輔助與自訂選項工具
 // ==========================================
+function handleCustomOption(selectEl, storageKey) {
+    if (selectEl.value === 'custom') {
+        const newVal = prompt(currentLang === 'zh' ? "請輸入新選項名稱：" : "Enter custom option name:");
+        if (newVal && newVal.trim() !== '') {
+            const cleanVal = newVal.trim();
+            const opt = document.createElement('option');
+            opt.value = cleanVal; opt.text = cleanVal;
+            selectEl.insertBefore(opt, selectEl.options[selectEl.options.length - 1]);
+            selectEl.value = cleanVal;
+            
+            let saved = JSON.parse(localStorage.getItem(storageKey)) || [];
+            if (!saved.includes(cleanVal)) {
+                saved.push(cleanVal);
+                localStorage.setItem(storageKey, JSON.stringify(saved));
+            }
+        } else { selectEl.selectedIndex = 0; }
+    }
+}
+
+function loadCustomOptions() {
+    ['inputAccount', 'inputCategory'].forEach(id => {
+        const key = id === 'inputAccount' ? 'customAccounts' : 'customCategories';
+        const saved = JSON.parse(localStorage.getItem(key)) || [];
+        const selectEl = document.getElementById(id);
+        saved.forEach(val => {
+            const opt = document.createElement('option'); opt.value = val; opt.text = val;
+            selectEl.insertBefore(opt, selectEl.options[selectEl.options.length - 1]);
+        });
+    });
+}
+
 function toggleLanguage() {
     currentLang = currentLang === 'zh' ? 'en' : 'zh';
     document.querySelectorAll('[data-i18n]').forEach(el => {
@@ -317,8 +361,7 @@ function toggleLanguage() {
         const key = el.getAttribute('data-i18n-placeholder');
         if (translations[currentLang][key]) el.placeholder = translations[currentLang][key];
     });
-    updateDashboard(); 
-    applyTheme(); 
+    updateDashboard(); applyTheme(); 
 }
 
 function setTransactionType(type) {
@@ -332,7 +375,7 @@ function setTransactionType(type) {
     } else {
         btnInc.classList.add('active'); btnExp.classList.remove('active');
         if(optExp) optExp.style.display = 'none'; if(optInc) optInc.style.display = 'block';
-        document.getElementById('inputCategory').value = 'Income'; 
+        document.getElementById('inputCategory').value = 'Salary'; 
     }
 }
 
@@ -353,9 +396,8 @@ function applyTheme() {
 }
 
 function toggleTheme() {
-    isDarkMode = !isDarkMode; 
-    localStorage.setItem('darkMode', isDarkMode); 
-    applyTheme();
+    isDarkMode = !isDarkMode; localStorage.setItem('darkMode', isDarkMode); 
+    applyTheme(); updateDashboard();
 }
 
 function applyBackground() {
@@ -365,9 +407,7 @@ function applyBackground() {
         document.body.style.backgroundSize = 'cover';
         document.body.style.backgroundAttachment = 'fixed';
         document.body.style.backgroundPosition = 'center';
-    } else {
-        document.body.style.backgroundImage = 'none';
-    }
+    } else { document.body.style.backgroundImage = 'none'; }
 }
 
 function changeBackground(event) {
@@ -375,33 +415,22 @@ function changeBackground(event) {
     if (file) {
         const reader = new FileReader();
         reader.onload = function(e) {
-            try {
-                localStorage.setItem('myBgImage', e.target.result);
-                applyBackground(); 
-            } catch (err) {
-                alert(translations[currentLang].alertBgSize);
-                document.getElementById('bgInput').value = ''; 
-            }
+            try { localStorage.setItem('myBgImage', e.target.result); applyBackground(); } 
+            catch (err) { alert(translations[currentLang].alertBgSize); document.getElementById('bgInput').value = ''; }
         };
         reader.readAsDataURL(file); 
     }
 }
 
-function clearBackground() {
-    localStorage.removeItem('myBgImage'); 
-    document.getElementById('bgInput').value = ''; 
-    applyBackground(); 
-}
-
+function clearBackground() { localStorage.removeItem('myBgImage'); document.getElementById('bgInput').value = ''; applyBackground(); }
 function formatMoney(num) { return parseFloat(num.toFixed(2)).toLocaleString('en-US'); }
-
 function formatDate(dateString) {
-    if (!dateString) return '';
-    const parts = dateString.split('-'); 
+    if (!dateString) return ''; const parts = dateString.split('-'); 
     return (parts.length === 3) ? `${parts[2]}/${parts[1]}/${parts[0]}` : dateString;
 }
 
-// 初始化
+// 初始化啟動
 applyBackground();
 applyTheme();
 setTransactionType('expense');
+loadCustomOptions(); // 👈 啟動時自動載入你存過的自訂選項
