@@ -44,7 +44,7 @@ const translations = {
         remark: "備註 (選填)", remarkPlaceholder: "輸入備註細節...",
         customBg: "自訂背景圖片：", clearBg: "清除背景", alertBgSize: "圖片檔案太大，無法儲存！請選擇小於 2MB 的圖片。",
         transferBtn: "轉帳🔄", fromAccount: "轉出帳戶", toAccount: "轉入帳戶", transferSameAlert: "轉出與轉入不能是同一個帳戶！",
-
+        searchPlaceholder: "🔍 搜尋分類、帳戶或備註...", 
     },
     en: {
         appTitle: "💰 Web Expense Tracker🐛 💰", totalIncome: "Total Income", totalExpense: "Total Expense",
@@ -62,7 +62,7 @@ const translations = {
         remark: "Remarks (Optional)", remarkPlaceholder: "Enter details...",
         customBg: "Custom Background: ", clearBg: "Clear Background", alertBgSize: "Image file is too large to save! Please choose an image smaller than 2MB.",
         transferBtn: "Transfer🔄", fromAccount: "From Account", toAccount: "To Account", transferSameAlert: "From and To accounts cannot be the same!",
-
+        searchPlaceholder: "🔍 Search category, account or remark...", 
     }
 };
 
@@ -268,30 +268,49 @@ function updateDashboard() {
     const filterVal = document.getElementById('filterTime').value;
     const today = new Date(); 
 
+    // 抓取搜尋框的文字，並轉成小寫 (防呆)
+    const searchInput = document.getElementById('searchInput');
+    const keyword = searchInput ? searchInput.value.toLowerCase().trim() : '';
+
     let filteredTransactions = transactions.filter(t => {
-        if (filterVal === 'all') return true; 
-        const tDate = new Date(t.date); 
-        if (filterVal === 'today') {
-            return tDate.toDateString() === today.toDateString(); 
+        // --- 1. 時間篩選關卡 ---
+        let timeMatch = false;
+        if (filterVal === 'all') { timeMatch = true; }
+        else {
+            const tDate = new Date(t.date); 
+            if (filterVal === 'today') {
+                timeMatch = (tDate.toDateString() === today.toDateString()); 
+            } else if (filterVal === 'month') {
+                timeMatch = (tDate.getMonth() === today.getMonth() && tDate.getFullYear() === today.getFullYear());
+            } else if (filterVal === 'week') {
+                const diffTime = today - tDate; 
+                const diffDays = diffTime / (1000 * 60 * 60 * 24);
+                timeMatch = (diffDays >= 0 && diffDays <= 7);
+            } else if (filterVal === 'custom') {
+                const startVal = document.getElementById('customStartDate').value;
+                const endVal = document.getElementById('customEndDate').value;
+                if (!startVal || !endVal) timeMatch = true; 
+                else {
+                    const startDate = new Date(startVal); startDate.setHours(0, 0, 0, 0); 
+                    const endDate = new Date(endVal); endDate.setHours(23, 59, 59, 999); 
+                    timeMatch = (tDate >= startDate && tDate <= endDate);
+                }
+            }
         }
-        if (filterVal === 'month') {
-            return tDate.getMonth() === today.getMonth() && tDate.getFullYear() === today.getFullYear();
+        // 如果時間不符合，直接淘汰
+        if (!timeMatch) return false;
+
+        // --- 2. 關鍵字搜尋關卡 ---
+        if (keyword) {
+            // 把分類、帳戶、備註 全部串成一包字串，並轉小寫來比對
+            const searchContent = `${t.category} ${t.account} ${t.remark || ''}`.toLowerCase();
+            if (!searchContent.includes(keyword)) {
+                return false; // 沒找到關鍵字就淘汰
+            }
         }
-        if (filterVal === 'week') {
-            const diffTime = today - tDate; 
-            const diffDays = diffTime / (1000 * 60 * 60 * 24);
-            return diffDays >= 0 && diffDays <= 7;
-        }
-        if (filterVal === 'custom') {
-            const startVal = document.getElementById('customStartDate').value;
-            const endVal = document.getElementById('customEndDate').value;
-            if (!startVal || !endVal) return true; 
-            const startDate = new Date(startVal); 
-            startDate.setHours(0, 0, 0, 0); 
-            const endDate = new Date(endVal); 
-            endDate.setHours(23, 59, 59, 999); 
-            return tDate >= startDate && tDate <= endDate;
-        }
+
+        // 兩關都過，留下這筆資料！
+        return true; 
     });
 
     filteredTransactions.sort((a, b) => new Date(b.date) - new Date(a.date));
