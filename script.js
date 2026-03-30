@@ -517,14 +517,61 @@ function deleteOption(index) {
     }
 }
 
-// 修改選項
-function editOption(index) {
+// 修改選項 (支援歷史紀錄連動更新 Cascading Update)
+async function editOption(index) {
     const oldVal = appOptions[currentModalType][index];
     const newVal = prompt(currentLang === 'zh' ? '請輸入新名稱：' : 'Enter new name:', oldVal);
+    
     if (newVal && newVal.trim() !== '' && newVal !== oldVal) {
-        appOptions[currentModalType][index] = newVal.trim();
+        const cleanNewVal = newVal.trim();
+        
+        // 1. 更新選單設定
+        appOptions[currentModalType][index] = cleanNewVal;
         saveOptions();
         renderModalList();
+        
+        // 2. 聯動更新雲端與本地的歷史紀錄
+        if (currentUser && transactions.length > 0) {
+            let updatedCount = 0;
+            const batch = db.batch(); // 使用 Firebase 批次處理，效能更好
+            
+            transactions.forEach(t => {
+                let needsUpdate = false;
+                const docRef = db.collection('users').doc(currentUser.uid).collection('transactions').doc(t.id);
+                
+                // 檢查是否需要更新帳戶 (包含轉出與轉入)
+                if (currentModalType === 'account' && t.account === oldVal) {
+                    t.account = cleanNewVal; needsUpdate = true;
+                }
+                if (currentModalType === 'account' && t.toAccount === oldVal) {
+                    t.toAccount = cleanNewVal; needsUpdate = true;
+                }
+                // 檢查是否需要更新分類
+                if ((currentModalType === 'expense' || currentModalType === 'income') && t.category === oldVal) {
+                    t.category = cleanNewVal; needsUpdate = true;
+                }
+                
+                // 如果這筆紀錄有用到舊標籤，就加進批次更新清單
+                if (needsUpdate) {
+                    batch.update(docRef, t);
+                    updatedCount++;
+                }
+            });
+            
+            // 如果有歷史紀錄被影響，就一口氣推上雲端並重整畫面
+            if (updatedCount > 0) {
+                document.getElementById('modalTitle').innerText = "⏳ 更新歷史紀錄中...";
+                try {
+                    await batch.commit(); 
+                    updateDashboard(); // 重新計算結餘
+                    alert(currentLang === 'zh' ? `✅ 已自動更新 ${updatedCount} 筆關聯的歷史紀錄！` : `✅ Updated ${updatedCount} related records!`);
+                } catch (error) {
+                    alert("更新歷史紀錄失敗：" + error.message);
+                } finally {
+                    document.getElementById('modalTitle').innerText = currentLang === 'zh' ? '⚙️ 管理選項' : '⚙️ Manage Options';
+                }
+            }
+        }
     }
 }
 
