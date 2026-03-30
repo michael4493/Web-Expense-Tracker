@@ -25,7 +25,7 @@
         </div>
     </div>
 
-    <h1 data-i18n="appTitle">💰 肥蟲記賬本🐛 💰</h1>
+    <h1 data-i18n="appTitle">💰 肥蟲記賬簿🐛 💰</h1>
 
     <div class="card" style="display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; padding: 15px; margin-bottom: 25px;">
         <label for="filterTime" style="font-weight: 700; margin-right: 15px; margin-bottom: 0;" data-i18n="viewRange">📅 查看範圍：</label>
@@ -72,11 +72,12 @@
             <div class="type-btn-group">
                 <button type="button" id="btnExpense" class="type-btn active" onclick="setTransactionType('expense')" data-i18n="expenseBtn">支出💸</button>
                 <button type="button" id="btnIncome" class="type-btn" onclick="setTransactionType('income')" data-i18n="incomeBtn">收入💰</button>
+                <button type="button" id="btnTransfer" class="type-btn" onclick="setTransactionType('transfer')" data-i18n="transferBtn">轉帳🔄</button>
             </div>
             <input type="hidden" id="inputType" value="expense">
         </div>
 
-        <div class="form-group">
+        <div class="form-group" id="groupCategory">
             <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 8px;">
                 <label data-i18n="category" style="margin-bottom: 0;">用途 / 分類</label>
                 <span style="cursor: pointer; color: #007bff; font-size: 13px; font-weight: bold;" onclick="openManageModal('category')">⚙️ 管理分類</span>
@@ -86,10 +87,17 @@
 
         <div class="form-group">
             <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 8px;">
-                <label data-i18n="accountSource" style="margin-bottom: 0;">帳戶 / 來源</label>
+                <label id="labelAccount" data-i18n="accountSource" style="margin-bottom: 0;">帳戶 / 來源</label>
                 <span style="cursor: pointer; color: #007bff; font-size: 13px; font-weight: bold;" onclick="openManageModal('account')">⚙️ 管理帳戶</span>
             </div>
             <select id="inputAccount"></select>
+        </div>
+
+        <div class="form-group" id="groupToAccount" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 8px;">
+                <label data-i18n="toAccount" style="margin-bottom: 0;">轉入帳戶</label>
+            </div>
+            <select id="inputToAccount"></select>
         </div>
 
         <div class="form-group">

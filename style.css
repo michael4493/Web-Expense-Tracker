@@ -510,3 +510,15 @@ body.dark-mode .modal-actions button {
     color: #f8fafc; 
     border-color: #475569; 
 }
+
+/* 轉帳按鈕點擊後的藍色發光效果 */
+#btnTransfer.active { 
+    background-color: #0d6efd; 
+    color: white; 
+    border-color: #0d6efd; 
+    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3); 
+}
+
+/* 歷史清單中，轉帳紀錄的左側邊框顏色 */
+.li-transfer { border-left-color: #0d6efd; }
+body.dark-mode .li-transfer { border-left-color: #3b82f6; }

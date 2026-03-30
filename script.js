@@ -43,6 +43,8 @@ const translations = {
         alertInput: "請填寫正確的日期與金額！", alertDel: "確定要刪除這筆單一紀錄嗎？", alertClear: "確定要清除所有的記帳紀錄嗎？這個動作無法復原喔！",
         remark: "備註 (選填)", remarkPlaceholder: "輸入備註細節...",
         customBg: "自訂背景圖片：", clearBg: "清除背景", alertBgSize: "圖片檔案太大，無法儲存！請選擇小於 2MB 的圖片。",
+        transferBtn: "轉帳🔄", fromAccount: "轉出帳戶", toAccount: "轉入帳戶", transferSameAlert: "轉出與轉入不能是同一個帳戶！",
+
     },
     en: {
         appTitle: "💰 Web Expense Tracker🐛 💰", totalIncome: "Total Income", totalExpense: "Total Expense",
@@ -59,6 +61,8 @@ const translations = {
         alertInput: "Please enter a valid date and amount!", alertDel: "Are you sure you want to delete this record?", alertClear: "Are you sure you want to clear ALL records? This cannot be undone!",
         remark: "Remarks (Optional)", remarkPlaceholder: "Enter details...",
         customBg: "Custom Background: ", clearBg: "Clear Background", alertBgSize: "Image file is too large to save! Please choose an image smaller than 2MB.",
+        transferBtn: "Transfer🔄", fromAccount: "From Account", toAccount: "To Account", transferSameAlert: "From and To accounts cannot be the same!",
+
     }
 };
 
@@ -125,7 +129,11 @@ async function addTransaction() {
     const date = document.getElementById('inputDate').value;
     const type = document.getElementById('inputType').value;
     const account = document.getElementById('inputAccount').value;
-    const category = document.getElementById('inputCategory').value;
+    
+    // 如果是轉帳，強制把類別設為 Transfer，並抓取轉入帳戶
+    const category = type === 'transfer' ? 'Transfer' : document.getElementById('inputCategory').value;
+    const toAccount = type === 'transfer' ? document.getElementById('inputToAccount').value : null;
+    
     const amount = Math.round(parseFloat(document.getElementById('inputAmount').value) * 100) / 100;
     const remark = document.getElementById('inputRemark').value;
 
@@ -134,7 +142,17 @@ async function addTransaction() {
         return; 
     }
 
+    // 轉出跟轉入不能一樣
+    if (type === 'transfer' && account === toAccount) {
+        alert(translations[currentLang].transferSameAlert);
+        return;
+    }
+
     const transactionData = { date, type, account, category, amount, remark };
+    
+    // 如果是轉帳，把目標帳戶存進資料庫
+    if (toAccount) transactionData.toAccount = toAccount;
+
     const btn = document.querySelector('button[onclick="addTransaction()"]');
     btn.innerText = "⏳ 雲端同步中..."; 
     btn.disabled = true;
@@ -205,12 +223,24 @@ function editTransaction(id) {
     if (!Array.from(document.getElementById('inputAccount').options).some(o => o.value === t.account)) {
         document.getElementById('inputAccount').add(new Option(t.account, t.account), 0);
     }
-    if (!Array.from(document.getElementById('inputCategory').options).some(o => o.value === t.category)) {
+    if (t.type !== 'transfer' && !Array.from(document.getElementById('inputCategory').options).some(o => o.value === t.category)) {
         document.getElementById('inputCategory').add(new Option(t.category, t.category), 0);
+    }
+    // 👇 確保轉入帳戶如果在選單找不到，也先補上去
+    if (t.type === 'transfer' && t.toAccount && !Array.from(document.getElementById('inputToAccount').options).some(o => o.value === t.toAccount)) {
+        document.getElementById('inputToAccount').add(new Option(t.toAccount, t.toAccount), 0);
     }
 
     document.getElementById('inputAccount').value = t.account;
-    document.getElementById('inputCategory').value = t.category;
+    
+    // 👇 修改：處理轉帳的編輯回填
+    if (t.type !== 'transfer') {
+        document.getElementById('inputCategory').value = t.category;
+    }
+    if (t.type === 'transfer' && t.toAccount) {
+        document.getElementById('inputToAccount').value = t.toAccount;
+    }
+    
     document.getElementById('inputAmount').value = t.amount;
     document.getElementById('inputRemark').value = t.remark || '';
     
@@ -267,6 +297,7 @@ function updateDashboard() {
     filteredTransactions.sort((a, b) => new Date(b.date) - new Date(a.date));
 
     filteredTransactions.forEach(t => {
+        // 只有收入跟支出會算進總表與圓餅圖 (轉帳直接無視)
         if (t.type === 'income') {
             totalIncome += t.amount; 
             incomeData[t.account] = (incomeData[t.account] || 0) + t.amount;
@@ -275,18 +306,38 @@ function updateDashboard() {
             expenseData[t.category] = (expenseData[t.category] || 0) + t.amount;
         }
 
-        // 計算各帳戶餘額
+        // 各帳戶餘額計算 (複式簿記邏輯)
         if (!accountTotals[t.account]) accountTotals[t.account] = 0;
-        accountTotals[t.account] += (t.type === 'income' ? t.amount : -t.amount);
+        
+        if (t.type === 'income') {
+            accountTotals[t.account] += t.amount;
+        } else if (t.type === 'expense') {
+            accountTotals[t.account] -= t.amount;
+        } else if (t.type === 'transfer') {
+            accountTotals[t.account] -= t.amount; // 轉出帳戶扣錢
+            if (t.toAccount) {
+                if (!accountTotals[t.toAccount]) accountTotals[t.toAccount] = 0;
+                accountTotals[t.toAccount] += t.amount; // 轉入帳戶加錢
+            }
+        }
 
         const li = document.createElement('li');
-        li.className = (t.type === 'income') ? 'li-income' : 'li-expense';
+        // 根據類型給予不同的 CSS class (藍、紅、綠)
+        li.className = (t.type === 'income') ? 'li-income' : (t.type === 'expense' ? 'li-expense' : 'li-transfer');
         const remarkText = t.remark ? `<br><small style="color: #6c757d; margin-top: 4px; display: inline-block;">📝 ${t.remark}</small>` : '';
+
+        // 判斷清單標題要怎麼顯示
+        let displayTitle = '';
+        if (t.type === 'transfer') {
+            displayTitle = `${t.account} ➡️ ${t.toAccount}`; // 轉帳顯示 A ➡️ B
+        } else {
+            displayTitle = `${t.account} -> ${t.category}`; // 正常顯示
+        }
 
         // 加入修改按鈕 (✏️)
         li.innerHTML = `
             <span>
-                <strong>${formatDate(t.date)}</strong> | ${t.account} -> ${t.category} 
+                <strong>${formatDate(t.date)}</strong> | ${displayTitle} 
                 ${remarkText}
             </span>
             <span>
@@ -513,15 +564,42 @@ function setTransactionType(type) {
     document.getElementById('inputType').value = type; 
     const btnExp = document.getElementById('btnExpense');
     const btnInc = document.getElementById('btnIncome');
+    const btnTrans = document.getElementById('btnTransfer'); // 新增
+    
+    const groupCat = document.getElementById('groupCategory');
+    const groupToAcc = document.getElementById('groupToAccount');
+    const labelAcc = document.getElementById('labelAccount');
+    
+    btnExp.classList.remove('active'); 
+    btnInc.classList.remove('active');
+    if (btnTrans) btnTrans.classList.remove('active');
     
     if (type === 'expense') {
         btnExp.classList.add('active'); 
-        btnInc.classList.remove('active');
-    } else {
+        groupCat.style.display = 'block';
+        if (groupToAcc) groupToAcc.style.display = 'none';
+        if (labelAcc) labelAcc.innerText = translations[currentLang].accountSource;
+    } else if (type === 'income') {
         btnInc.classList.add('active'); 
-        btnExp.classList.remove('active');
+        groupCat.style.display = 'block';
+        if (groupToAcc) groupToAcc.style.display = 'none';
+        if (labelAcc) labelAcc.innerText = translations[currentLang].accountSource;
+    } else if (type === 'transfer') {
+        if (btnTrans) btnTrans.classList.add('active');
+        groupCat.style.display = 'none'; // 轉帳不需要分類
+        if (groupToAcc) groupToAcc.style.display = 'block'; // 顯示轉入帳戶
+        if (labelAcc) labelAcc.innerText = translations[currentLang].fromAccount; // 改名為轉出帳戶
     }
-    renderDropdowns(); // 切換類型時更新選單
+    renderDropdowns();
+
+    // 渲染轉入帳戶 (轉帳專用)
+    const toAccSelect = document.getElementById('inputToAccount');
+    if (toAccSelect) {
+        const currentToAcc = toAccSelect.value;
+        toAccSelect.innerHTML = '';
+        appOptions.account.forEach(opt => toAccSelect.add(new Option(opt, opt)));
+        if (appOptions.account.includes(currentToAcc)) toAccSelect.value = currentToAcc;
+    }
 }
 
 function handleFilterChange() {
