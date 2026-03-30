@@ -216,24 +216,24 @@ function editTransaction(id) {
     const t = transactions.find(x => x.id === id);
     if (!t) return;
     
+    // 1. 回填日期與類型
     document.getElementById('inputDate').value = t.date;
     setTransactionType(t.type); 
     
-    // 檢查下拉選單有沒有這個選項，沒有就暫時補上
+    // 2. 檢查下拉選單有沒有這個選項，沒有就暫時補上 (防呆)
     if (!Array.from(document.getElementById('inputAccount').options).some(o => o.value === t.account)) {
         document.getElementById('inputAccount').add(new Option(t.account, t.account), 0);
     }
     if (t.type !== 'transfer' && !Array.from(document.getElementById('inputCategory').options).some(o => o.value === t.category)) {
         document.getElementById('inputCategory').add(new Option(t.category, t.category), 0);
     }
-    // 👇 確保轉入帳戶如果在選單找不到，也先補上去
     if (t.type === 'transfer' && t.toAccount && !Array.from(document.getElementById('inputToAccount').options).some(o => o.value === t.toAccount)) {
         document.getElementById('inputToAccount').add(new Option(t.toAccount, t.toAccount), 0);
     }
 
+    // 3. 回填所有欄位資料
     document.getElementById('inputAccount').value = t.account;
     
-    // 👇 修改：處理轉帳的編輯回填
     if (t.type !== 'transfer') {
         document.getElementById('inputCategory').value = t.category;
     }
@@ -244,11 +244,14 @@ function editTransaction(id) {
     document.getElementById('inputAmount').value = t.amount;
     document.getElementById('inputRemark').value = t.remark || '';
     
+    // 4. 改變按鈕狀態與顏色
     editingId = id; 
     const btn = document.querySelector('button[onclick="addTransaction()"]');
     btn.innerHTML = translations[currentLang].confirmEdit;
     btn.style.background = "#ffc107"; 
-    btn.style.color = "#000"; // 變成醒目的黃色
+    btn.style.color = "#000"; 
+    
+    // 5. 🚀 核心動畫：平滑滾動回網頁最上方
     window.scrollTo({ top: 0, behavior: 'smooth' }); 
 }
 
