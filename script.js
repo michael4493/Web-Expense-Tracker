@@ -318,11 +318,11 @@ function updateDashboard() {
 
     filteredTransactions.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-    filteredTransactions.forEach(t => {
-        // 只有收入跟支出會算進總表與圓餅圖 (轉帳直接無視)
+    filteredTransactions.forEach((t, index) => { // 👈 這裡多加了 index (索引值)
+        // 1. 這些計算必須「全部執行」，不管是不是前 5 筆
         if (t.type === 'income') {
             totalIncome += t.amount; 
-            incomeData[t.account] = (incomeData[t.account] || 0) + t.amount;
+            incomeData[t.category] = (incomeData[t.category] || 0) + t.amount;
         } else if (t.type === 'expense') {
             totalExpense += t.amount; 
             expenseData[t.category] = (expenseData[t.category] || 0) + t.amount;
@@ -336,39 +336,39 @@ function updateDashboard() {
         } else if (t.type === 'expense') {
             accountTotals[t.account] -= t.amount;
         } else if (t.type === 'transfer') {
-            accountTotals[t.account] -= t.amount; // 轉出帳戶扣錢
+            accountTotals[t.account] -= t.amount; 
             if (t.toAccount) {
                 if (!accountTotals[t.toAccount]) accountTotals[t.toAccount] = 0;
-                accountTotals[t.toAccount] += t.amount; // 轉入帳戶加錢
+                accountTotals[t.toAccount] += t.amount; 
             }
         }
 
-        const li = document.createElement('li');
-        // 根據類型給予不同的 CSS class (藍、紅、綠)
-        li.className = (t.type === 'income') ? 'li-income' : (t.type === 'expense' ? 'li-expense' : 'li-transfer');
-        const remarkText = t.remark ? `<br><small style="color: #6c757d; margin-top: 4px; display: inline-block;">📝 ${t.remark}</small>` : '';
+        // 2. 👇 新增限制：只把「前 5 筆」(index 0, 1, 2, 3, 4) 畫到首頁畫面上
+        if (index < 5) {
+            const li = document.createElement('li');
+            li.className = (t.type === 'income') ? 'li-income' : (t.type === 'expense' ? 'li-expense' : 'li-transfer');
+            const remarkText = t.remark ? `<br><small style="color: #6c757d; margin-top: 4px; display: inline-block;">📝 ${t.remark}</small>` : '';
 
-        // 判斷清單標題要怎麼顯示
-        let displayTitle = '';
-        if (t.type === 'transfer') {
-            displayTitle = `${t.account} ➡️ ${t.toAccount}`; // 轉帳顯示 A ➡️ B
-        } else {
-            displayTitle = `${t.account} -> ${t.category}`; // 正常顯示
+            let displayTitle = '';
+            if (t.type === 'transfer') {
+                displayTitle = `${t.account} ➡️ ${t.toAccount}`; 
+            } else {
+                displayTitle = `${t.account} -> ${t.category}`; 
+            }
+
+            li.innerHTML = `
+                <span>
+                    <strong>${formatDate(t.date)}</strong> | ${displayTitle} 
+                    ${remarkText}
+                </span>
+                <span>
+                    $${formatMoney(t.amount)} 
+                    <button class="theme-btn" style="padding: 2px 8px; font-size: 14px; background: #ffc107; color: #000; border: none; min-width: auto; margin-left: 10px;" onclick="editTransaction('${t.id}')">✏️</button>
+                    <button class="delete-btn" style="min-width: auto; margin-left: 5px;" onclick="deleteTransaction('${t.id}')">❌</button>
+                </span>
+            `;
+            listEl.appendChild(li); 
         }
-
-        // 加入修改按鈕 (✏️)
-        li.innerHTML = `
-            <span>
-                <strong>${formatDate(t.date)}</strong> | ${displayTitle} 
-                ${remarkText}
-            </span>
-            <span>
-                $${formatMoney(t.amount)} 
-                <button class="theme-btn" style="padding: 2px 8px; font-size: 14px; background: #ffc107; color: #000; border: none; min-width: auto; margin-left: 10px;" onclick="editTransaction('${t.id}')">✏️</button>
-                <button class="delete-btn" style="min-width: auto; margin-left: 5px;" onclick="deleteTransaction('${t.id}')">❌</button>
-            </span>
-        `;
-        listEl.appendChild(li); 
     });
 
     document.getElementById('totalIncome').innerText = formatMoney(totalIncome);
