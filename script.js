@@ -474,16 +474,18 @@ let currentModalType = ''; // 紀錄現在打開的是哪個管理視窗
 
 // 將選項渲染到畫面上的下拉選單
 function renderDropdowns() {
-    const type = document.getElementById('inputType').value; // 'expense' 或 'income'
+    const type = document.getElementById('inputType').value; // 'expense', 'income', 或 'transfer'
     
-    // 渲染分類
+    // 渲染分類 (保護機制：只有支出和收入才需要渲染分類)
     const catSelect = document.getElementById('inputCategory');
-    const currentCat = catSelect.value;
-    catSelect.innerHTML = '';
-    appOptions[type].forEach(opt => catSelect.add(new Option(opt, opt)));
-    if (appOptions[type].includes(currentCat)) catSelect.value = currentCat; 
+    if (type !== 'transfer' && appOptions[type]) {
+        const currentCat = catSelect.value;
+        catSelect.innerHTML = '';
+        appOptions[type].forEach(opt => catSelect.add(new Option(opt, opt)));
+        if (appOptions[type].includes(currentCat)) catSelect.value = currentCat; 
+    }
 
-    // 渲染帳戶
+    // 渲染帳戶 (所有類型都需要渲染帳戶)
     const accSelect = document.getElementById('inputAccount');
     const currentAcc = accSelect.value;
     accSelect.innerHTML = '';
