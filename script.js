@@ -35,7 +35,7 @@ const translations = {
         category: "用途 / 分類", accountSource: "帳戶 / 來源", amount: "金額",
         amountPlaceholder: "輸入金額 (HKD)", confirmAdd: "確認新增", confirmEdit: "💾 儲存修改",
         expenseAnalysis: "📈 支出分析", noExpenseData: "目前尚無支出資料可供分析 💸",
-        incomeAnalysis: "💰 收入來源分析", noIncomeData: "目前尚無收入資料可供分析 💰",
+        incomeAnalysis: "💰 收入分析", noIncomeData: "目前尚無收入資料可供分析 💰",
         recentRecords: "📝 最近交易紀錄", clearAll: "🗑️ 清除所有紀錄",
         feedbackBtn: "💡 給開發者留言回饋 (Feedback)",
         expenseHighlight: "支出重點", incomeHighlight: "收入重點",
@@ -251,8 +251,8 @@ function editTransaction(id) {
     btn.style.background = "#ffc107"; 
     btn.style.color = "#000"; 
     
-    // 5. 🚀 核心動畫：平滑滾動回網頁最上方
-    window.scrollTo({ top: 0, behavior: 'smooth' }); 
+    // 5. 🚀 核心動畫：平滑滾動到「新增交易」卡片的日期輸入框，並將其置中
+    document.getElementById('inputDate').scrollIntoView({ behavior: 'smooth', block: 'center' }); 
 }
 
 // ==========================================
@@ -267,6 +267,19 @@ function updateDashboard() {
     const expenseData = {}; 
     const incomeData = {}; 
     let accountTotals = {}; // 紀錄各帳戶結餘
+
+    // 動態更新「最近紀錄」的標題與抓取顯示筆數 ---
+    const limitSelect = document.getElementById('recordLimit');
+    const listTitle = document.getElementById('recentRecordsTitle');
+    const limitVal = limitSelect ? limitSelect.value : '5';
+
+    if (listTitle) {
+        if (limitVal === 'all') {
+            listTitle.innerText = currentLang === 'zh' ? '📝 全部交易紀錄' : '📝 All Records';
+        } else {
+            listTitle.innerText = currentLang === 'zh' ? `📝 最近 ${limitVal} 筆交易紀錄` : `📝 Recent ${limitVal} Records`;
+        }
+    }
 
     const filterVal = document.getElementById('filterTime').value;
     const today = new Date(); 
@@ -318,7 +331,7 @@ function updateDashboard() {
 
     filteredTransactions.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-    filteredTransactions.forEach((t, index) => { // 👈 這裡多加了 index (索引值)
+    filteredTransactions.forEach((t, index) => {
         // 1. 這些計算必須「全部執行」，不管是不是前 5 筆
         if (t.type === 'income') {
             totalIncome += t.amount; 
@@ -343,8 +356,8 @@ function updateDashboard() {
             }
         }
 
-        // 2. 👇 新增限制：只把「前 5 筆」(index 0, 1, 2, 3, 4) 畫到首頁畫面上
-        if (index < 5) {
+        // 2. 👇 根據下拉選單的限制來畫出清單
+        if (limitVal === 'all' || index < parseInt(limitVal)) {
             const li = document.createElement('li');
             li.className = (t.type === 'income') ? 'li-income' : (t.type === 'expense' ? 'li-expense' : 'li-transfer');
             const remarkText = t.remark ? `<br><small style="color: #6c757d; margin-top: 4px; display: inline-block;">📝 ${t.remark}</small>` : '';

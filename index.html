@@ -124,7 +124,7 @@
     </div>
 
     <div class="card">
-        <h3 data-i18n="incomeAnalysis">💰 收入來源分析</h3>
+        <h3 data-i18n="incomeAnalysis">💰 收入分析</h3>
         <div class="chart-container">
             <canvas id="incomeChart"></canvas>
         </div>
@@ -135,9 +135,15 @@
 
     <div class="card">
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-            <h3 data-i18n="recentRecords" style="margin: 0;">📝 最近交易紀錄</h3>
+            <h3 id="recentRecordsTitle" style="margin: 0;">📝 最近 5 筆交易紀錄</h3>
             
-            <input type="text" id="searchInput" oninput="updateDashboard()" placeholder="🔍 搜尋分類、帳戶或備註..." data-i18n-placeholder="searchPlaceholder" style="flex: 1; min-width: 180px; max-width: 300px; margin-bottom: 0; padding: 8px 12px; border-radius: 8px;">
+            <select id="recordLimit" onchange="updateDashboard()" style="width: auto; min-width: 110px; margin-bottom: 0; padding: 8px; border-radius: 8px; border: 1px solid #ced4da;">
+                <option value="5">顯示 5 筆</option>
+                <option value="10">顯示 10 筆</option>
+                <option value="all">顯示全部</option>
+            </select>
+
+            <input type="search" id="searchInput" oninput="updateDashboard()" placeholder="🔍 搜尋分類、帳戶或備註..." data-i18n-placeholder="searchPlaceholder" style="flex: 1; min-width: 180px; max-width: 300px; margin-bottom: 0; padding: 8px 12px; border-radius: 8px;">
 
             <button onclick="window.open('details.html', '_blank')" style="width: auto; background-color: #007bff; margin-top: 0; padding: 8px 15px;">
                 📄 詳細檢視
