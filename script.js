@@ -375,10 +375,11 @@ function updateDashboard() {
     document.getElementById('totalExpense').innerText = formatMoney(totalExpense);
     document.getElementById('totalBalance').innerText = formatMoney(totalIncome - totalExpense);
 
-    // 渲染各帳戶結餘到畫面上
+    // 渲染各帳戶結餘到畫面上 (自動隱藏結餘為 0 的帳戶)
     const accBalDiv = document.getElementById('accountBalances');
     if (accBalDiv) {
         accBalDiv.innerHTML = Object.keys(accountTotals)
+            .filter(acc => accountTotals[acc] !== 0) // 👈 新增這行：只保留結餘不等於 0 的帳戶
             .map(acc => `<div style="display:flex; justify-content:space-between; margin-bottom: 4px;"><span>🏦 ${acc}</span><span style="font-weight:bold; color: ${accountTotals[acc] < 0 ? '#dc3545' : '#28a745'};">$${formatMoney(accountTotals[acc])}</span></div>`)
             .join('');
     }
