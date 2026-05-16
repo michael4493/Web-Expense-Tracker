@@ -68,6 +68,15 @@ const translations = {
 
 let currentLang = 'zh'; 
 let isDarkMode = localStorage.getItem('darkMode') !== 'false';
+// 讀取隱藏餘額的狀態 (預設為不隱藏)
+let isBalanceHidden = localStorage.getItem('hideBalance') === 'true';
+
+// 切換隱藏狀態的函數
+function toggleBalanceVisibility() {
+    isBalanceHidden = !isBalanceHidden;
+    localStorage.setItem('hideBalance', isBalanceHidden); // 存入本機記憶
+    updateDashboard(); // 重新渲染畫面
+}
 
 // ==========================================
 // 🔐 Google 登入系統與雲端連線
@@ -386,14 +395,35 @@ function updateDashboard() {
 
     document.getElementById('totalIncome').innerText = formatMoney(totalIncome);
     document.getElementById('totalExpense').innerText = formatMoney(totalExpense);
-    document.getElementById('totalBalance').innerText = formatMoney(totalIncome - totalExpense);
+    
+    // 根據隱藏狀態來決定顯示數字還是星號
+    const eyeBtn = document.getElementById('toggleBalanceBtn');
+    const currencySymbol = document.getElementById('currencySymbol');
+    
+    if (eyeBtn) {
+        eyeBtn.innerText = isBalanceHidden ? '🙈' : '👁️';
+    }
 
-    // 渲染各帳戶結餘到畫面上 (自動隱藏結餘為 0 的帳戶)
+    if (isBalanceHidden) {
+        currencySymbol.style.display = 'none'; // 隱藏錢字號
+        document.getElementById('totalBalance').innerText = '****';
+    } else {
+        currencySymbol.style.display = 'inline';
+        document.getElementById('totalBalance').innerText = formatMoney(totalIncome - totalExpense);
+    }
+
+    // 渲染各帳戶結餘到畫面上 (支援隱藏模式)
     const accBalDiv = document.getElementById('accountBalances');
     if (accBalDiv) {
         accBalDiv.innerHTML = Object.keys(accountTotals)
-            .filter(acc => accountTotals[acc] !== 0) // 👈 新增這行：只保留結餘不等於 0 的帳戶
-            .map(acc => `<div style="display:flex; justify-content:space-between; margin-bottom: 4px;"><span>🏦 ${acc}</span><span style="font-weight:bold; color: ${accountTotals[acc] < 0 ? '#dc3545' : '#28a745'};">$${formatMoney(accountTotals[acc])}</span></div>`)
+            .filter(acc => accountTotals[acc] !== 0)
+            .map(acc => {
+                // 如果是隱藏模式，就顯示 **** 且顏色變為預設白色；否則顯示正常金額與紅綠色
+                const amountText = isBalanceHidden ? '****' : `$${formatMoney(accountTotals[acc])}`;
+                const colorHex = isBalanceHidden ? 'inherit' : (accountTotals[acc] < 0 ? '#dc3545' : '#28a745');
+                
+                return `<div style="display:flex; justify-content:space-between; margin-bottom: 4px;"><span>🏦 ${acc}</span><span style="font-weight:bold; color: ${colorHex};">${amountText}</span></div>`;
+            })
             .join('');
     }
 

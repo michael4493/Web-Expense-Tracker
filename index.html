@@ -53,7 +53,10 @@
             <span data-i18n="totalExpense">總支出</span><br>$<span id="totalExpense">0</span>
         </div>
         <div class="summary-box bg-save">
-            <span data-i18n="currentBalance">目前結餘</span><br>$<span id="totalBalance">0</span>
+            <span data-i18n="currentBalance">目前結餘</span>
+            <span id="toggleBalanceBtn" onclick="toggleBalanceVisibility()" style="cursor: pointer; margin-left: 8px; font-size: 16px; opacity: 0.8; transition: opacity 0.2s;">👁️</span>
+            <br>
+            <span id="currencySymbol">$</span><span id="totalBalance">0</span>
             <div id="accountBalances" style="font-size: 13px; margin-top: 8px; border-top: 1px solid rgba(255,255,255,0.4); padding-top: 8px; text-align: left; font-weight: normal;">
             </div>
         </div>
