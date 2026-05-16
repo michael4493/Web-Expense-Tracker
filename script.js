@@ -44,7 +44,7 @@ const translations = {
         remark: "備註 (選填)", remarkPlaceholder: "輸入備註細節...",
         customBg: "自訂背景圖片：", clearBg: "清除背景", alertBgSize: "圖片檔案太大，無法儲存！請選擇小於 2MB 的圖片。",
         transferBtn: "轉帳🔄", fromAccount: "轉出帳戶", toAccount: "轉入帳戶", transferSameAlert: "轉出與轉入不能是同一個帳戶！",
-        searchPlaceholder: "🔍 搜尋分類、帳戶或備註...", 
+        searchPlaceholder: "🔍 搜尋分類、帳戶或備註...", rangeSelectMonth: "快速選擇月份 (Select Month)",
     },
     en: {
         appTitle: "💰 Web Expense Tracker🐛 💰", totalIncome: "Total Income", totalExpense: "Total Expense",
@@ -62,7 +62,7 @@ const translations = {
         remark: "Remarks (Optional)", remarkPlaceholder: "Enter details...",
         customBg: "Custom Background: ", clearBg: "Clear Background", alertBgSize: "Image file is too large to save! Please choose an image smaller than 2MB.",
         transferBtn: "Transfer🔄", fromAccount: "From Account", toAccount: "To Account", transferSameAlert: "From and To accounts cannot be the same!",
-        searchPlaceholder: "🔍 Search category, account or remark...", 
+        searchPlaceholder: "🔍 Search category, account or remark...", rangeSelectMonth: "Select Month",
     }
 };
 
@@ -299,7 +299,7 @@ function updateDashboard() {
 
     let filteredTransactions = transactions.filter(t => {
         // --- 1. 時間篩選關卡 ---
-        let timeMatch = false;
+let timeMatch = false;
         if (filterVal === 'all') { timeMatch = true; }
         else {
             const tDate = new Date(t.date); 
@@ -307,11 +307,18 @@ function updateDashboard() {
                 timeMatch = (tDate.toDateString() === today.toDateString()); 
             } else if (filterVal === 'month') {
                 timeMatch = (tDate.getMonth() === today.getMonth() && tDate.getFullYear() === today.getFullYear());
-            } else if (filterVal === 'week') {
-                const diffTime = today - tDate; 
-                const diffDays = diffTime / (1000 * 60 * 60 * 24);
-                timeMatch = (diffDays >= 0 && diffDays <= 7);
-            } else if (filterVal === 'custom') {
+            // 👇 全新的 select_month 邏輯
+            } else if (filterVal === 'select_month') {
+                const monthVal = document.getElementById('filterMonthInput').value; // 格式會是 "YYYY-MM" (例如 "2026-05")
+                if (!monthVal) {
+                    timeMatch = true; // 如果還沒選月份，就當作全部顯示
+                } else {
+                    const [year, month] = monthVal.split('-');
+                    // JavaScript 的月份是 0-11，所以輸入框的月要減 1 才能正確比對
+                    timeMatch = (tDate.getFullYear() === parseInt(year) && tDate.getMonth() === (parseInt(month) - 1));
+                }
+            } // 👈 就是這個大括號！用來關閉 select_month 區塊
+            else if (filterVal === 'custom') {
                 const startVal = document.getElementById('customStartDate').value;
                 const endVal = document.getElementById('customEndDate').value;
                 if (!startVal || !endVal) timeMatch = true; 
@@ -393,22 +400,35 @@ function updateDashboard() {
         }
     });
 
-    document.getElementById('totalIncome').innerText = formatMoney(totalIncome);
-    document.getElementById('totalExpense').innerText = formatMoney(totalExpense);
-    
-    // 根據隱藏狀態來決定顯示數字還是星號
+    // 抓取所有相關的錢字號標籤
     const eyeBtn = document.getElementById('toggleBalanceBtn');
     const currencySymbol = document.getElementById('currencySymbol');
+    const currencyIncome = document.getElementById('currencyIncome');
+    const currencyExpense = document.getElementById('currencyExpense');
     
     if (eyeBtn) {
         eyeBtn.innerText = isBalanceHidden ? '🙈' : '👁️';
     }
 
     if (isBalanceHidden) {
-        currencySymbol.style.display = 'none'; // 隱藏錢字號
+        // 🙈 隱藏模式：把三個錢字號全部藏起來
+        if (currencySymbol) currencySymbol.style.display = 'none';
+        if (currencyIncome) currencyIncome.style.display = 'none';
+        if (currencyExpense) currencyExpense.style.display = 'none';
+        
+        // 數字全部變成星號
+        document.getElementById('totalIncome').innerText = '****';
+        document.getElementById('totalExpense').innerText = '****';
         document.getElementById('totalBalance').innerText = '****';
     } else {
-        currencySymbol.style.display = 'inline';
+        // 👁️ 顯示模式：把三個錢字號全部顯示出來
+        if (currencySymbol) currencySymbol.style.display = 'inline';
+        if (currencyIncome) currencyIncome.style.display = 'inline';
+        if (currencyExpense) currencyExpense.style.display = 'inline';
+        
+        // 顯示精準計算後的實際金額
+        document.getElementById('totalIncome').innerText = formatMoney(totalIncome);
+        document.getElementById('totalExpense').innerText = formatMoney(totalExpense);
         document.getElementById('totalBalance').innerText = formatMoney(totalIncome - totalExpense);
     }
 
@@ -718,8 +738,14 @@ function setTransactionType(type) {
 }
 
 function handleFilterChange() {
+    const filterVal = document.getElementById('filterTime').value;
     const customArea = document.getElementById('customDateArea');
-    customArea.style.display = (document.getElementById('filterTime').value === 'custom') ? 'block' : 'none';
+    const monthArea = document.getElementById('monthPickerArea'); // 抓取新的月份框
+
+    // 根據下拉選單的值，決定顯示哪個區塊
+    customArea.style.display = (filterVal === 'custom') ? 'block' : 'none';
+    monthArea.style.display = (filterVal === 'select_month') ? 'block' : 'none';
+    
     updateDashboard(); 
 }
 

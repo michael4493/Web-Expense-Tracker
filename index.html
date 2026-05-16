@@ -33,11 +33,15 @@
         <select id="filterTime" onchange="handleFilterChange()" style="width: auto; min-width: 180px; margin-bottom: 0;">
             <option value="all" data-i18n="rangeAll">全部紀錄 (All Time)</option>
             <option value="today" data-i18n="rangeDay">本日 (Today)</option>
-            <option value="week" data-i18n="rangeWeek">最近 7 天 (Last 7 Days)</option>
             <option value="month" data-i18n="rangeMonth">這個月 (This Month)</option>
+            <option value="select_month" data-i18n="rangeSelectMonth">快速選擇月份 (Select Month)</option>
             <option value="custom" data-i18n="rangeCustom">自訂範圍 (Custom)</option>
         </select>
         
+        <div id="monthPickerArea" style="display: none; margin-top: 15px; width: 100%; text-align: right;">
+            <input type="month" id="filterMonthInput" onchange="updateDashboard()" style="width: auto; display: inline-block; padding: 8px 12px; border-radius: 8px; border: 1px solid #ced4da;">
+        </div>
+
         <div id="customDateArea" style="display: none; margin-top: 15px; width: 100%; text-align: right;">
             <input type="date" id="customStartDate" onchange="updateDashboard()" style="width: auto; display: inline-block;"> 
             <span data-i18n="to" style="margin: 0 10px; font-weight: bold;">至</span> 
@@ -47,10 +51,12 @@
 
     <div class="summary-container">
         <div class="summary-box bg-income">
-            <span data-i18n="totalIncome">總收入</span><br>$<span id="totalIncome">0</span>
+            <span data-i18n="totalIncome">總收入</span><br>
+            <span id="currencyIncome">$</span><span id="totalIncome">0</span>
         </div>
         <div class="summary-box bg-expense">
-            <span data-i18n="totalExpense">總支出</span><br>$<span id="totalExpense">0</span>
+            <span data-i18n="totalExpense">總支出</span><br>
+            <span id="currencyExpense">$</span><span id="totalExpense">0</span>
         </div>
         <div class="summary-box bg-save">
             <span data-i18n="currentBalance">目前結餘</span>
