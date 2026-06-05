@@ -31,10 +31,10 @@
         <label for="filterTime" style="font-weight: 700; margin-right: 15px; margin-bottom: 0;" data-i18n="viewRange">📅 查看範圍：</label>
         
         <select id="filterTime" onchange="handleFilterChange()" style="width: auto; min-width: 180px; margin-bottom: 0;">
-            <option value="today" data-i18n="rangeDay" selected>本日 (Today)</option>
+            <option value="all" data-i18n="rangeAll" selected>全部紀錄 (All Time)</option>
+            <option value="today" data-i18n="rangeDay">本日 (Today)</option>
             <option value="month" data-i18n="rangeMonth">這個月 (This Month)</option>
             <option value="select_month" data-i18n="rangeSelectMonth">快速選擇月份 (Select Month)</option>
-            <option value="all" data-i18n="rangeAll">全部紀錄 (All Time)</option>
             <option value="custom" data-i18n="rangeCustom">自訂範圍 (Custom)</option>
         </select>
         
@@ -147,6 +147,7 @@
             <h3 id="recentRecordsTitle" style="margin: 0;">📝 最近 5 筆交易紀錄</h3>
             
             <select id="recordLimit" onchange="updateDashboard()" style="width: auto; min-width: 110px; margin-bottom: 0; padding: 8px; border-radius: 8px; border: 1px solid #ced4da;">
+                <option value="today" selected>本日紀錄</option>
                 <option value="5">顯示 5 筆</option>
                 <option value="10">顯示 10 筆</option>
                 <option value="all">顯示全部</option>

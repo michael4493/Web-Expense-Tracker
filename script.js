@@ -280,11 +280,13 @@ function updateDashboard() {
     // 動態更新「最近紀錄」的標題與抓取顯示筆數 ---
     const limitSelect = document.getElementById('recordLimit');
     const listTitle = document.getElementById('recentRecordsTitle');
-    const limitVal = limitSelect ? limitSelect.value : '5';
+    const limitVal = limitSelect ? limitSelect.value : 'today'; // 預設改為 today
 
     if (listTitle) {
         if (limitVal === 'all') {
             listTitle.innerText = currentLang === 'zh' ? '📝 全部交易紀錄' : '📝 All Records';
+        } else if (limitVal === 'today') {
+            listTitle.innerText = currentLang === 'zh' ? '📝 本日交易紀錄' : '📝 Today\'s Records';
         } else {
             listTitle.innerText = currentLang === 'zh' ? `📝 最近 ${limitVal} 筆交易紀錄` : `📝 Recent ${limitVal} Records`;
         }
@@ -345,10 +347,18 @@ let timeMatch = false;
         return true; 
     });
 
-    filteredTransactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+    // 👇 排序邏輯優化：日期新的在上。如果同一天，則利用 Firebase ID 排序 (越晚新增的 ID 越大，確保最新一筆永遠在最上面)
+    filteredTransactions.sort((a, b) => {
+        const dateDiff = new Date(b.date) - new Date(a.date);
+        if (dateDiff !== 0) return dateDiff;
+        return (b.id > a.id) ? 1 : -1;
+    });
 
-    filteredTransactions.forEach((t, index) => {
-        // 1. 這些計算必須「全部執行」，不管是不是前 5 筆
+    let renderedCount = 0; // 紀錄已經畫了幾筆
+    const currentToday = new Date(); // 抓取今天的日期
+
+    filteredTransactions.forEach((t) => {
+        // 1. 這些計算必須「全部執行」，因為圖表和總結餘看的是大局
         if (t.type === 'income') {
             totalIncome += t.amount; 
             incomeData[t.category] = (incomeData[t.category] || 0) + t.amount;
@@ -372,8 +382,22 @@ let timeMatch = false;
             }
         }
 
-        // 2. 👇 根據下拉選單的限制來畫出清單
-        if (limitVal === 'all' || index < parseInt(limitVal)) {
+        // 2. 👇 決定是否要把這筆紀錄畫到下方的清單中
+        let shouldRender = false;
+        if (limitVal === 'all') {
+            shouldRender = true;
+        } else if (limitVal === 'today') {
+            const tDate = new Date(t.date);
+            shouldRender = (tDate.toDateString() === currentToday.toDateString());
+        } else {
+            if (renderedCount < parseInt(limitVal)) {
+                shouldRender = true;
+            }
+        }
+
+        // 如果符合條件，才把它放到畫面上
+        if (shouldRender) {
+            renderedCount++;
             const li = document.createElement('li');
             li.className = (t.type === 'income') ? 'li-income' : (t.type === 'expense' ? 'li-expense' : 'li-transfer');
             const remarkText = t.remark ? `<br><small style="color: #6c757d; margin-top: 4px; display: inline-block;">📝 ${t.remark}</small>` : '';
