@@ -157,7 +157,8 @@ async function addTransaction() {
         return;
     }
 
-    const transactionData = { date, type, account, category, amount, remark };
+    // 👇 createdAt: Date.now()，紀錄當下精確到毫秒的時間戳記
+    const transactionData = { date, type, account, category, amount, remark, createdAt: Date.now() };
     
     // 如果是轉帳，把目標帳戶存進資料庫
     if (toAccount) transactionData.toAccount = toAccount;
@@ -347,11 +348,13 @@ let timeMatch = false;
         return true; 
     });
 
-    // 👇 排序邏輯優化：日期新的在上。如果同一天，則利用 Firebase ID 排序 (越晚新增的 ID 越大，確保最新一筆永遠在最上面)
+    // 👇 排序邏輯優化：先比對日期。如果是同一天，再比對精確到毫秒的新增時間
     filteredTransactions.sort((a, b) => {
         const dateDiff = new Date(b.date) - new Date(a.date);
         if (dateDiff !== 0) return dateDiff;
-        return (b.id > a.id) ? 1 : -1;
+        
+        // 為了相容以前沒有 createdAt 的舊資料，如果找不到就當作 0 (|| 0)
+        return (b.createdAt || 0) - (a.createdAt || 0);
     });
 
     let renderedCount = 0; // 紀錄已經畫了幾筆
