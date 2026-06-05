@@ -44,6 +44,7 @@
                     <th data-i18n="accountSource">帳戶 / 來源</th>
                     <th data-i18n="amountHkd">金額 (HKD)</th>
                     <th data-i18n="remark">備註</th>
+                    <th data-i18n="actions">操作</th>
                 </tr>
             </thead>
             <tbody id="tableBody">
@@ -63,14 +64,16 @@
                 rangeAll: "全部紀錄 (All Time)", rangeMonth: "這個月 (This Month)", rangeWeek: "最近 7 天 (Last 7 Days)",
                 rangeCustom: "自訂範圍 (Custom)", to: "至", date: "日期", transactionType: "類型",
                 category: "用途 / 分類", accountSource: "帳戶 / 來源", amountHkd: "金額 (HKD)", remark: "備註",
-                expenseText: "支出💸", incomeText: "收入💰", noData: "此範圍內沒有任何交易紀錄 👻", noRemark: "無"
+                expenseText: "支出💸", incomeText: "收入💰", noData: "此範圍內沒有任何交易紀錄 👻", noRemark: "無",
+                actions: "操作",
             },
             en: {
                 detailsTitle: "📄 Detailed Transaction Report", closeBtn: "✖ Close Tab", viewRange: "📅 View Range:",
                 rangeAll: "All Time", rangeMonth: "This Month", rangeWeek: "Last 7 Days",
                 rangeCustom: "Custom Range", to: "to", date: "Date", transactionType: "Type",
                 category: "Category", accountSource: "Account / Source", amountHkd: "Amount (HKD)", remark: "Remarks",
-                expenseText: "Expense💸", incomeText: "Income💰", noData: "No transaction records in this range 👻", noRemark: "None"
+                expenseText: "Expense💸", incomeText: "Income💰", noData: "No transaction records in this range 👻", noRemark: "None",
+                actions: "Actions",
             }
         };
 
@@ -197,9 +200,35 @@
                     <td>${t.account}</td>
                     <td class="${amountClass}">${amountPrefix} $${formatMoney(t.amount)}</td>
                     <td>${remarkText}</td>
+                    <td>
+                        <button onclick="handleEdit('${t.id}')" style="padding: 4px 8px; font-size: 14px; background: #ffc107; color: #000; border: none; min-width: auto; border-radius: 6px;">✏️</button>
+                        <button onclick="handleDelete('${t.id}')" style="padding: 4px 8px; font-size: 14px; background: rgba(220, 53, 69, 0.1); color: #dc3545; border: none; min-width: auto; margin-left: 5px; border-radius: 6px;">❌</button>
+                    </td>
                 `;
                 tbody.appendChild(tr);
             });
+        }
+
+        // --- 👇 新增：遙控主畫面執行修改與刪除的邏輯 ---
+        function handleEdit(id) {
+            // 檢查主畫面 (window.opener) 是否還開著
+            if (window.opener && !window.opener.closed) {
+                window.opener.editTransaction(id); // 呼叫主畫面的函數
+                window.opener.focus(); // 把主畫面彈出到最上層
+                window.close(); // 關閉現在的詳細報表頁面
+            } else {
+                alert(currentLang === 'zh' ? "找不到主畫面！請重新從主畫面開啟報表。" : "Main window not found!");
+            }
+        }
+
+        function handleDelete(id) {
+            if (window.opener && !window.opener.closed) {
+                window.opener.deleteTransaction(id); // 呼叫主畫面的刪除 (會跳出確認視窗)
+                window.opener.focus(); 
+                window.close(); 
+            } else {
+                alert(currentLang === 'zh' ? "找不到主畫面！請重新從主畫面開啟報表。" : "Main window not found!");
+            }
         }
 
         // 初始化啟動區
