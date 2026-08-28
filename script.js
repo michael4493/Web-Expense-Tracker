@@ -463,7 +463,8 @@ let timeMatch = false;
     const accBalDiv = document.getElementById('accountBalances');
     if (accBalDiv) {
         accBalDiv.innerHTML = Object.keys(accountTotals)
-            .filter(acc => accountTotals[acc] !== 0)
+            // 👇 解決 JavaScript 浮點數運算誤差，過濾掉絕對值小於 0.01 的 0 元帳戶
+            .filter(acc => Math.abs(accountTotals[acc]) >= 0.01)
             .map(acc => {
                 // 如果是隱藏模式，就顯示 **** 且顏色變為預設白色；否則顯示正常金額與紅綠色
                 const amountText = isBalanceHidden ? '****' : `$${formatMoney(accountTotals[acc])}`;
@@ -773,6 +774,9 @@ function handleFilterChange() {
     customArea.style.display = (filterVal === 'custom') ? 'block' : 'none';
     monthArea.style.display = (filterVal === 'select_month') ? 'block' : 'none';
     
+    // 👇 新增這行：自動將當前選擇存入該裝置的 LocalStorage
+    localStorage.setItem('defaultFilterTime', filterVal);
+
     updateDashboard(); 
 }
 
@@ -844,3 +848,12 @@ applyBackground();
 applyTheme();
 setTransactionType('expense');
 renderDropdowns();
+
+// 👇 新增：讀取並套用該裝置專屬的預設查看範圍
+const savedFilterTime = localStorage.getItem('defaultFilterTime');
+const filterTimeEl = document.getElementById('filterTime');
+if (savedFilterTime && filterTimeEl) {
+    filterTimeEl.value = savedFilterTime;
+}
+// 啟動時主動觸發一次，確保圖表與日期框狀態正確
+handleFilterChange();
